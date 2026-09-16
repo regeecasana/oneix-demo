@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "./theme-toggle"
 
 export function TopNav({
   view,
@@ -41,12 +42,15 @@ export function TopNav({
         </button>
       </div>
 
-      <div className="hidden items-center gap-1.5 text-xs text-teal-400 sm:flex">
-        <span className="relative flex size-1.5">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-400 opacity-75" />
-          <span className="relative inline-flex size-1.5 rounded-full bg-teal-400" />
-        </span>
-        Live demo
+      <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-1.5 text-xs text-teal-400 sm:flex">
+          <span className="relative flex size-1.5">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-400 opacity-75" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-teal-400" />
+          </span>
+          Live demo
+        </div>
+        <ThemeToggle />
       </div>
     </header>
   )
