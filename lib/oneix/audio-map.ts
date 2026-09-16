@@ -8,22 +8,22 @@ import type { AudioMap } from "./types"
  * Turns are voiced incrementally — a turn with no entry here just falls back to
  * the timed typing-indicator simulation in `chat-widget.tsx`. Turns sharing a
  * `group` play back-to-back behind a single typing indicator, with `order`
- * controlling the sequence — that's how "two bubbles sent at once" (e.g. Jordan's
- * opening recap, split into `fraud-agent-1` / `fraud-agent-2`) is expressed.
+ * controlling the sequence — that's how "two bubbles sent at once" would be
+ * expressed for turns that are immediately consecutive in the script (a customer
+ * reply between two turns breaks the run, so they just voice independently).
  *
- * Directory convention: audio/{industry}/{role: ai|agent}/{direction: inbound|outbound}/{clip}.mp3
+ * Directory convention: audio/{industry}/{scenarioId}/{speakerSlug}/{clip}.mp3
+ * — keyed by the actual character speaking (ava, jordan, sofia, ...) rather than
+ * a fixed "ai vs agent" role, since a scenario isn't guaranteed to have exactly
+ * one of each.
  */
 export const audioMap: AudioMap = {
   fraud: {
-    "fraud-agent-1": {
-      src: "/audio/bfsi/agent/inbound/jamir-1.mp3",
-      group: "fraud-jordan-open",
-      order: 1,
+    "fraud-ai-1": {
+      src: "/audio/bfsi/fraud/ava/1.mp3",
     },
-    "fraud-agent-2": {
-      src: "/audio/bfsi/agent/inbound/jamir-2.mp3",
-      group: "fraud-jordan-open",
-      order: 2,
+    "fraud-ai-2": {
+      src: "/audio/bfsi/fraud/ava/2.mp3",
     },
   },
   collections: {},
