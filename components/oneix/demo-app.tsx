@@ -1,0 +1,88 @@
+"use client"
+
+import { useState } from "react"
+import { TopNav } from "./top-nav"
+import { Hero } from "./hero"
+import { IndustryGrid } from "./industry-grid"
+import { ChatWidget } from "./chat-widget"
+import { NotificationToast } from "./notification-toast"
+import { AgentWorkspace } from "./agent-workspace"
+import { scriptsByScenario } from "@/lib/oneix/scripts"
+import type { IndustryId, ScenarioSummary } from "@/lib/oneix/types"
+
+export function DemoApp() {
+  const [view, setView] = useState<"customer" | "agent">("customer")
+  const [industry, setIndustry] = useState<IndustryId>("banking")
+  const [scenario, setScenario] = useState<ScenarioSummary | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [toastOpen, setToastOpen] = useState(false)
+
+  function handleSelectIndustry(id: IndustryId) {
+    setIndustry(id)
+    setScenario(null)
+    setChatOpen(false)
+    setToastOpen(false)
+  }
+
+  function handleSelectScenario(s: ScenarioSummary) {
+    if (!s.available) return
+    setScenario(s)
+    setChatOpen(false)
+    setToastOpen(false)
+    if (s.direction === "outbound") {
+      setToastOpen(true)
+    } else {
+      setChatOpen(true)
+    }
+  }
+
+  function closeEverything() {
+    setChatOpen(false)
+    setToastOpen(false)
+    setScenario(null)
+  }
+
+  const script = scenario ? scriptsByScenario[scenario.id] : null
+
+  return (
+    <div className="min-h-svh bg-background">
+      <TopNav view={view} onViewChange={setView} />
+
+      {view === "customer" ? (
+        <>
+          <Hero />
+          <IndustryGrid
+            activeIndustry={industry}
+            onSelectIndustry={handleSelectIndustry}
+            activeScenarioId={scenario?.id ?? null}
+            onSelectScenario={handleSelectScenario}
+            openScenarioId={chatOpen || toastOpen ? (scenario?.id ?? null) : null}
+          />
+
+          {toastOpen && !chatOpen && scenario && (
+            <NotificationToast
+              onReview={() => {
+                setToastOpen(false)
+                setChatOpen(true)
+              }}
+              onDismiss={() => setToastOpen(false)}
+            />
+          )}
+
+          {chatOpen && scenario && script && (
+            <ChatWidget
+              key={scenario.id}
+              script={script}
+              title={`${scenario.title} conversation`}
+              badgeLabel={scenario.direction === "inbound" ? "Inbound" : "Outbound"}
+              subtitle={scenario.title}
+              onClose={closeEverything}
+            />
+          )}
+        </>
+      ) : (
+        <AgentWorkspace />
+      )}
+    </div>
+  )
+}

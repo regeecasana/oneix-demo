@@ -1,0 +1,258 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
+import type { ChatTurn } from "@/lib/oneix/types"
+import { X, ShieldAlert } from "./icons"
+
+function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
+  return (
+    <div
+      className={cn(
+        "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white",
+        tone === "ai" && "bg-teal-500",
+        tone === "agent" && "bg-indigo-500",
+        tone === "customer" && "bg-slate-400",
+      )}
+    >
+      {label}
+    </div>
+  )
+}
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-muted px-3 py-2.5">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50"
+          style={{ animationDelay: `${i * 120}ms` }}
+        />
+      ))}
+    </div>
+  )
+}
+
+export function ChatWidget({
+  script,
+  title,
+  badgeLabel,
+  subtitle,
+  onClose,
+}: {
+  script: ChatTurn[]
+  title: string
+  badgeLabel: string
+  subtitle: string
+  onClose: () => void
+}) {
+  const [rendered, setRendered] = useState<ChatTurn[]>([])
+  const [index, setIndex] = useState(0)
+  const [typing, setTyping] = useState(false)
+  const [handoffTo, setHandoffTo] = useState<string | null>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const pending = index < script.length ? script[index] : null
+  const awaitingReply = pending?.kind === "reply"
+
+  useEffect(() => {
+    if (!pending || awaitingReply) return
+    const isMessage = pending.kind === "message"
+    const delay = isMessage ? 700 + Math.min(pending.text.length * 12, 1100) : 500
+
+    if (isMessage) setTyping(true)
+    const t = setTimeout(() => {
+      setTyping(false)
+      if (pending.kind === "handoff") setHandoffTo(pending.to)
+      setRendered((r) => [...r, pending])
+      setIndex((i) => i + 1)
+    }, delay)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [rendered, typing])
+
+  function sendReply() {
+    if (!pending || pending.kind !== "reply") return
+    setRendered((r) => [...r, pending])
+    setIndex((i) => i + 1)
+  }
+
+  const activeAgentName = handoffTo ?? "Ava"
+
+  return (
+    <div className="fixed right-4 bottom-4 z-50 flex h-[min(640px,calc(100vh-2rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+      <div className="flex items-start justify-between border-b border-border bg-linear-to-r from-[#0b1f26] to-[#0a1520] px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
+          <div>
+            <div className="flex items-center gap-1.5 text-sm font-medium text-white">
+              {activeAgentName}
+              <span className="text-white/40">·</span>
+              <span className="text-white/50">{handoffTo ? "Live Agent" : "AI Assistant"}</span>
+              <span className="ml-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/70">
+                {badgeLabel}
+              </span>
+            </div>
+            <div className="text-xs text-teal-300/70">{subtitle}</div>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="rounded-full p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        {rendered.map((turn, i) => (
+          <TurnView key={i} turn={turn} />
+        ))}
+        {typing && (
+          <div className="flex items-end gap-2">
+            <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
+            <TypingDots />
+          </div>
+        )}
+        {!pending && rendered.length > 0 && (
+          <div className="pt-1 text-center text-[11px] text-muted-foreground">Conversation ended</div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      <div className="border-t border-border px-4 py-3">
+        {awaitingReply && pending?.kind === "reply" ? (
+          <button
+            onClick={sendReply}
+            className="w-full rounded-xl border border-teal-300 bg-teal-50 px-3 py-2 text-left text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
+          >
+            {pending.text}
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            {pending ? "Waiting for response…" : title}
+          </div>
+        )}
+        <p className="mt-2 text-center text-[10px] text-muted-foreground">Orchestrated by oneix</p>
+      </div>
+    </div>
+  )
+}
+
+function TurnView({ turn }: { turn: ChatTurn }) {
+  switch (turn.kind) {
+    case "alert":
+      return (
+        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/50 dark:bg-red-950/30">
+          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-red-500" />
+          <div>
+            <div className="text-xs font-semibold text-red-600 dark:text-red-400">{turn.title}</div>
+            {turn.lines.map((l, i) => (
+              <div key={i} className="text-xs text-red-700/80 dark:text-red-300/70">
+                {l}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    case "message":
+      return (
+        <div className="flex items-end gap-2">
+          <Avatar label={turn.speaker[0]} tone={turn.from === "agent" ? "agent" : "ai"} />
+          <div>
+            <div className="mb-0.5 text-[10px] text-muted-foreground">{turn.speaker}</div>
+            <div
+              className={cn(
+                "max-w-[260px] rounded-2xl rounded-bl-sm px-3 py-2 text-sm leading-snug",
+                turn.from === "agent"
+                  ? "bg-indigo-50 text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-100"
+                  : "bg-muted text-foreground",
+              )}
+            >
+              {turn.text}
+            </div>
+          </div>
+        </div>
+      )
+    case "reply":
+      return (
+        <div className="flex justify-end">
+          <div className="max-w-[260px] rounded-2xl rounded-br-sm bg-[#0a1520] px-3 py-2 text-sm leading-snug text-white">
+            {turn.text}
+          </div>
+        </div>
+      )
+    case "system":
+      return (
+        <div className="text-center text-[11px] text-muted-foreground italic">{turn.text}</div>
+      )
+    case "handoff":
+      return (
+        <div className="flex items-center gap-2 py-1">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-[11px] whitespace-nowrap text-muted-foreground">
+            Connecting you to {turn.to} · {turn.role}
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+      )
+    case "transactions":
+      return (
+        <div className="rounded-xl border border-border bg-muted/30 p-2.5">
+          {turn.items.map((item, i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex items-center justify-between py-1.5 text-xs",
+                i !== turn.items.length - 1 && "border-b border-border/60",
+              )}
+            >
+              <div>
+                <div className="font-medium text-foreground">{item.label}</div>
+                <div className="text-muted-foreground">{item.time}</div>
+              </div>
+              <div className="font-medium text-foreground">{item.amount}</div>
+            </div>
+          ))}
+        </div>
+      )
+    case "payment":
+      return (
+        <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-3 text-xs dark:border-teal-900/50 dark:bg-teal-950/20">
+          <div className="mb-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300">{turn.title}</div>
+          <div className="mb-2 text-[11px] text-muted-foreground">Source: {turn.source}</div>
+          {turn.rows.map((row, i) => (
+            <div key={i} className="flex justify-between py-0.5">
+              <span className="text-muted-foreground">{row.label}</span>
+              <span className="font-medium text-foreground">{row.amount}</span>
+            </div>
+          ))}
+          <div className="mt-1.5 flex justify-between border-t border-teal-200/60 pt-1.5 font-semibold text-teal-800 dark:border-teal-900/50 dark:text-teal-300">
+            <span>Total</span>
+            <span>{turn.total}</span>
+          </div>
+        </div>
+      )
+    case "status":
+      return (
+        <div className="rounded-xl border border-border bg-muted/30 p-3">
+          <div className="mb-2 text-xs font-semibold text-foreground">{turn.title}</div>
+          <div className="space-y-1">
+            {turn.rows.map((row, i) => (
+              <div key={i} className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className={cn("font-medium", row.positive ? "text-teal-600" : "text-foreground")}>
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+  }
+}
