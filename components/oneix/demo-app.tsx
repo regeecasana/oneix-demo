@@ -72,6 +72,7 @@ export function DemoApp() {
           {chatOpen && scenario && script && (
             <ChatWidget
               key={scenario.id}
+              scenarioId={scenario.id}
               script={script}
               title={`${scenario.title} conversation`}
               badgeLabel={scenario.direction === "inbound" ? "Inbound" : "Outbound"}

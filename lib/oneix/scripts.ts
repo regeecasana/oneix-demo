@@ -1,6 +1,7 @@
-import type { CaseFile, ChatTurn } from "./types"
+import type { CaseFile, ChatTurn, ChatTurnContent } from "./types"
+import { withTurnIds } from "./turn-ids"
 
-export const fraudScript: ChatTurn[] = [
+const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "alert",
     title: "FRAUD ALERT",
@@ -97,7 +98,13 @@ export const fraudScript: ChatTurn[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Maya, I'm Jordan with Account Protection. Ava's brought me up to speed — card 1842 is frozen, LUXEMARKET and the $600 ATM withdrawal are disputed, MetroRide is yours, and you received a suspicious call yesterday. You don't need to repeat any of that.",
+    text: "Hi Maya, I'm Jordan with Account Protection. Ava's brought me up to speed.",
+  },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Card 1842 is frozen, LUXEMARKET and the $600 ATM withdrawal are disputed, MetroRide is yours, and you received a suspicious call yesterday. You don't need to repeat any of that.",
   },
   { kind: "reply", text: "That's a relief. Can they still log into my bank account?" },
   { kind: "system", text: "Reviewing recent access and security changes…" },
@@ -149,7 +156,9 @@ export const fraudScript: ChatTurn[] = [
   },
 ]
 
-export const collectionsScript: ChatTurn[] = [
+export const fraudScript = withTurnIds("fraud", fraudScriptContent)
+
+const collectionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
@@ -267,6 +276,8 @@ export const collectionsScript: ChatTurn[] = [
     ],
   },
 ]
+
+export const collectionsScript = withTurnIds("collections", collectionsScriptContent)
 
 export const scriptsByScenario: Record<string, ChatTurn[]> = {
   fraud: fraudScript,

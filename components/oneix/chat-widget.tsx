@@ -1,9 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn } from "@/lib/oneix/types"
+import { audioMap } from "@/lib/oneix/audio-map"
+import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
 import { X, ShieldAlert } from "./icons"
+import { TurnAudioPlayer } from "./turn-audio-player"
 
 function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
   return (
@@ -35,12 +38,14 @@ function TypingDots() {
 }
 
 export function ChatWidget({
+  scenarioId,
   script,
   title,
   badgeLabel,
   subtitle,
   onClose,
 }: {
+  scenarioId: string
   script: ChatTurn[]
   title: string
   badgeLabel: string
@@ -56,8 +61,22 @@ export function ChatWidget({
   const pending = index < script.length ? script[index] : null
   const awaitingReply = pending?.kind === "reply"
 
+  // Consecutive turns that share an audio `group` are the "sent together" bursts —
+  // null here just means "this turn has no mapped clip, use the timed fallback".
+  const batch = useMemo(
+    () => (pending ? getAudioBatch(audioMap, scenarioId, script, index) : null),
+    [scenarioId, script, index, pending],
+  )
+
   useEffect(() => {
     if (!pending || awaitingReply) return
+
+    if (batch) {
+      // TurnAudioPlayer below drives the reveal/advance via onStart/onComplete.
+      setTyping(true)
+      return
+    }
+
     const isMessage = pending.kind === "message"
     const delay = isMessage ? 700 + Math.min(pending.text.length * 12, 1100) : 500
 
@@ -124,6 +143,20 @@ export function ChatWidget({
         )}
         <div ref={bottomRef} />
       </div>
+
+      {batch && !awaitingReply && (
+        <TurnAudioPlayer
+          key={pending!.id}
+          clips={batch.clips}
+          onStart={() => {
+            setTyping(false)
+            setRendered((r) => [...r, ...batch.turns])
+            const handoffTurn = batch.turns.find((t) => t.kind === "handoff")
+            if (handoffTurn?.kind === "handoff") setHandoffTo(handoffTurn.to)
+          }}
+          onComplete={() => setIndex((i) => i + batch.turns.length)}
+        />
+      )}
 
       <div className="border-t border-border px-4 py-3">
         {awaitingReply && pending?.kind === "reply" ? (
