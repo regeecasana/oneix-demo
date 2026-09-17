@@ -32,7 +32,10 @@ export type ChatTurnContent =
   | { kind: "faceid"; text: string }
   | { kind: "checklist"; from: "ai" | "agent"; speaker: string; items: string[] }
   | { kind: "handoff"; to: string; role: string }
-  | { kind: "transactions"; items: { id: string; label: string; amount: string; time: string }[] }
+  | {
+      kind: "transactions"
+      items: { id: string; label: string; amount: string; time: string; correctVerdict: TxnVerdict }[]
+    }
   | { kind: "payment"; title: string; source: string; rows: { label: string; amount: string }[]; total: string }
   | { kind: "status"; title: string; rows: { label: string; value: string; positive?: boolean }[] }
 

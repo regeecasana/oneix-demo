@@ -50,8 +50,8 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "transactions",
     items: [
-      { id: "quickcash-atm", label: "QuickCash ATM", amount: "$600.00", time: "Today, 9:51 AM" },
-      { id: "metroride", label: "MetroRide", amount: "$19.42", time: "Today, 8:14 AM" },
+      { id: "quickcash-atm", label: "QuickCash ATM", amount: "$600.00", time: "Today, 9:51 AM", correctVerdict: "unknown" },
+      { id: "metroride", label: "MetroRide", amount: "$19.42", time: "Today, 8:14 AM", correctVerdict: "mine" },
     ],
   },
   { kind: "reply", text: "Got it — please continue." },
