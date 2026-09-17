@@ -49,6 +49,18 @@ function FaceIdScan() {
   )
 }
 
+function SystemPulse() {
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
+      <span className="relative flex size-1.5">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-400/70" />
+        <span className="relative inline-flex size-1.5 rounded-full bg-teal-500 dark:bg-teal-400" />
+      </span>
+      Processing…
+    </div>
+  )
+}
+
 export function ChatWidget({
   scenarioId,
   script,
@@ -157,7 +169,12 @@ export function ChatWidget({
             <FaceIdScan />
           </div>
         )}
-        {typing && pending?.kind !== "faceid" && (
+        {typing && pending?.kind === "system" && (
+          <div className="flex justify-center">
+            <SystemPulse />
+          </div>
+        )}
+        {typing && pending?.kind !== "faceid" && pending?.kind !== "system" && (
           <div className="flex items-end gap-2">
             <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
             <TypingDots />

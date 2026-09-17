@@ -18,22 +18,34 @@ import type { AudioMap } from "./types"
  * one of each. Non-dialogue sound effects (chimes, dings) that aren't tied to a
  * character or scenario live in audio/sfx/{clip}.mp3 instead.
  */
+const DING = "/audio/sfx/ding.mp3"
+
 export const audioMap: AudioMap = {
   fraud: {
-    "fraud-ai-1": {
-      src: "/audio/bfsi/fraud/ava/1.mp3",
-    },
-    "fraud-ai-2": {
-      src: "/audio/bfsi/fraud/ava/2.mp3",
-    },
-    // Short confirmation chime, not a spoken line — drop the file at
-    // public/audio/sfx/ding.mp3 to wire it in.
-    "fraud-faceid-1": {
-      src: "/audio/sfx/ding.mp3",
-    },
-    "fraud-ai-3": {
-      src: "/audio/bfsi/fraud/ava/3.mp3",
-    },
+    "fraud-ai-1": { src: "/audio/bfsi/fraud/ava/1.mp3" },
+    "fraud-ai-2": { src: "/audio/bfsi/fraud/ava/2.mp3" },
+    // Short confirmation chime, not a spoken line.
+    "fraud-faceid-1": { src: DING },
+    "fraud-ai-3": { src: "/audio/bfsi/fraud/ava/3.mp3" },
+    "fraud-ai-4": { src: "/audio/bfsi/fraud/ava/4.mp3" },
+    "fraud-ai-5": { src: "/audio/bfsi/fraud/ava/5.mp3" },
+    "fraud-ai-6": { src: "/audio/bfsi/fraud/ava/6.mp3" },
+    "fraud-ai-7": { src: "/audio/bfsi/fraud/ava/7.mp3" },
+    "fraud-ai-8": { src: "/audio/bfsi/fraud/ava/8.mp3" },
+    // "Card status: BLOCKED — suspected fraud." — a backend action, not dialogue.
+    "fraud-system-1": { src: DING },
+    "fraud-ai-9": { src: "/audio/bfsi/fraud/ava/9.mp3" },
+    "fraud-ai-10": { src: "/audio/bfsi/fraud/ava/10.mp3" },
+    "fraud-ai-11": { src: "/audio/bfsi/fraud/ava/11.mp3" },
+    "fraud-agent-1": { src: "/audio/bfsi/fraud/jordan/1.mp3" },
+    "fraud-agent-2": { src: "/audio/bfsi/fraud/jordan/2.mp3" },
+    // "Reviewing recent access and security changes…" — same idea, a system cue.
+    "fraud-system-2": { src: DING },
+    "fraud-agent-3": { src: "/audio/bfsi/fraud/jordan/3.mp3" },
+    "fraud-agent-4": { src: "/audio/bfsi/fraud/jordan/4.mp3" },
+    "fraud-agent-5": { src: "/audio/bfsi/fraud/jordan/5.mp3" },
+    "fraud-agent-6": { src: "/audio/bfsi/fraud/jordan/6.mp3" },
+    "fraud-agent-7": { src: "/audio/bfsi/fraud/jordan/7.mp3" },
   },
   collections: {},
 }
