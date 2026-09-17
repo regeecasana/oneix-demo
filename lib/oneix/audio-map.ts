@@ -31,6 +31,9 @@ export const audioMap: AudioMap = {
     "fraud-faceid-1": {
       src: "/audio/sfx/ding.mp3",
     },
+    "fraud-ai-3": {
+      src: "/audio/bfsi/fraud/ava/3.mp3",
+    },
   },
   collections: {},
 }
