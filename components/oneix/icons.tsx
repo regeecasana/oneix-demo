@@ -14,6 +14,11 @@ import {
   Moon,
   ScanFace,
   ShieldCheck,
+  ArrowLeft,
+  Video,
+  Phone,
+  Send,
+  Mic,
 } from "lucide-react"
 import type { IndustryDef } from "@/lib/oneix/types"
 
@@ -24,4 +29,21 @@ export const industryIcons: Record<IndustryDef["icon"], typeof Landmark> = {
   heart: Heart,
 }
 
-export { Check, X, MessageCircle, ArrowRight, Bell, ShieldAlert, CreditCard, Sun, Moon, ScanFace, ShieldCheck }
+export {
+  Check,
+  X,
+  MessageCircle,
+  ArrowRight,
+  Bell,
+  ShieldAlert,
+  CreditCard,
+  Sun,
+  Moon,
+  ScanFace,
+  ShieldCheck,
+  ArrowLeft,
+  Video,
+  Phone,
+  Send,
+  Mic,
+}

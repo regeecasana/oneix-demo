@@ -5,6 +5,7 @@ import { TopNav } from "./top-nav"
 import { Hero } from "./hero"
 import { IndustryGrid } from "./industry-grid"
 import { ChatWidget } from "./chat-widget"
+import { WhatsAppChat } from "./whatsapp-chat"
 import { NotificationToast } from "./notification-toast"
 import { AgentWorkspace } from "./agent-workspace"
 import { scriptsByScenario } from "@/lib/oneix/scripts"
@@ -69,13 +70,17 @@ export function DemoApp() {
             />
           )}
 
-          {chatOpen && scenario && script && (
+          {chatOpen && scenario && script && scenario.direction === "outbound" && (
+            <WhatsAppChat key={scenario.id} scenarioId={scenario.id} script={script} onClose={closeEverything} />
+          )}
+
+          {chatOpen && scenario && script && scenario.direction === "inbound" && (
             <ChatWidget
               key={scenario.id}
               scenarioId={scenario.id}
               script={script}
               title={`${scenario.title} conversation`}
-              badgeLabel={scenario.direction === "inbound" ? "Inbound" : "Outbound"}
+              badgeLabel="Inbound"
               subtitle={scenario.title}
               onClose={closeEverything}
             />

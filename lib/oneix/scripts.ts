@@ -169,6 +169,11 @@ export const fraudScript = withTurnIds("fraud", fraudScriptContent)
 
 const collectionsScriptContent: ChatTurnContent[] = [
   {
+    kind: "alert",
+    title: "ACCOUNT NEEDS ATTENTION",
+    lines: ["$286.40 past due · Rewards ••••4821", "Payment options are available."],
+  },
+  {
     kind: "message",
     from: "ai",
     speaker: "Ava",
