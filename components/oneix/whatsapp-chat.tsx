@@ -256,7 +256,7 @@ function Bubble({ side, time, children }: { side: "in" | "out"; time: string; ch
     <div className={cn("flex", side === "out" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "relative max-w-[78%] rounded-lg py-2 pr-9 pl-3 text-sm leading-snug shadow-sm",
+          "relative max-w-[78%] rounded-lg py-2 pr-9 pl-3 text-sm leading-snug whitespace-pre-line shadow-sm",
           side === "out"
             ? "rounded-tr-sm bg-[#d9fdd3] text-foreground dark:bg-[#005c4b] dark:text-white"
             : "rounded-tl-sm bg-white text-foreground dark:bg-[#202c33] dark:text-white",

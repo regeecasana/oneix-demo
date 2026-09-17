@@ -204,7 +204,7 @@ function TurnView({
             <div className="mb-0.5 text-[10px] text-muted-foreground">{turn.speaker}</div>
             <div
               className={cn(
-                "max-w-[260px] rounded-2xl rounded-bl-sm px-3 py-2 text-sm leading-snug",
+                "max-w-[260px] rounded-2xl rounded-bl-sm px-3 py-2 text-sm leading-snug whitespace-pre-line",
                 turn.from === "agent"
                   ? "bg-indigo-50 text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-100"
                   : "bg-muted text-foreground",
