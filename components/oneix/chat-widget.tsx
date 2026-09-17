@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import type { ChatTurn } from "@/lib/oneix/types"
+import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
 import { X, ShieldAlert, ScanFace, ShieldCheck, Check } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
+import { TxnRow } from "./txn-row"
 
 function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
   return (
@@ -81,6 +82,7 @@ export function ChatWidget({
     pending,
     typing,
     awaitingReply,
+    readyToReply,
     batch,
     handoffTo,
     activeAgentName,
@@ -88,6 +90,8 @@ export function ChatWidget({
     sendReply,
     onAudioStart,
     onAudioComplete,
+    verdicts,
+    classify,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
@@ -121,7 +125,7 @@ export function ChatWidget({
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {rendered.map((turn, i) => (
-          <TurnView key={i} turn={turn} />
+          <TurnView key={i} turn={turn} verdicts={verdicts} onClassify={classify} />
         ))}
         {typing && pending?.kind === "faceid" && (
           <div className="flex justify-center">
@@ -150,7 +154,7 @@ export function ChatWidget({
       )}
 
       <div className="border-t border-border px-4 py-3">
-        {awaitingReply && pending?.kind === "reply" ? (
+        {readyToReply && pending?.kind === "reply" ? (
           <button
             onClick={sendReply}
             className="w-full rounded-xl border border-teal-300 bg-teal-50 px-3 py-2 text-left text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
@@ -168,7 +172,15 @@ export function ChatWidget({
   )
 }
 
-function TurnView({ turn }: { turn: ChatTurn }) {
+function TurnView({
+  turn,
+  verdicts,
+  onClassify,
+}: {
+  turn: ChatTurn
+  verdicts: Record<string, TxnVerdict>
+  onClassify: (itemId: string, verdict: TxnVerdict) => void
+}) {
   switch (turn.kind) {
     case "alert":
       return (
@@ -251,21 +263,14 @@ function TurnView({ turn }: { turn: ChatTurn }) {
       )
     case "transactions":
       return (
-        <div className="rounded-xl border border-border bg-muted/30 p-2.5">
-          {turn.items.map((item, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex items-center justify-between py-1.5 text-xs",
-                i !== turn.items.length - 1 && "border-b border-border/60",
-              )}
-            >
-              <div>
-                <div className="font-medium text-foreground">{item.label}</div>
-                <div className="text-muted-foreground">{item.time}</div>
-              </div>
-              <div className="font-medium text-foreground">{item.amount}</div>
-            </div>
+        <div className="space-y-2">
+          {turn.items.map((item) => (
+            <TxnRow
+              key={item.id}
+              item={item}
+              verdict={verdicts[item.id]}
+              onClassify={(v) => onClassify(item.id, v)}
+            />
           ))}
         </div>
       )

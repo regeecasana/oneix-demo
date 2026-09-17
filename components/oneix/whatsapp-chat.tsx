@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import type { ChatTurn } from "@/lib/oneix/types"
+import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
 import { TurnAudioPlayer } from "./turn-audio-player"
+import { TxnRow } from "./txn-row"
 import { ArrowLeft, Video, Phone, X, Send, Mic, Check } from "./icons"
 
 /** Fake, incrementing clock for the demo — starts at 10:23 AM, +1 min per bubble. */
@@ -31,12 +32,15 @@ export function WhatsAppChat({
     pending,
     typing,
     awaitingReply,
+    readyToReply,
     batch,
     activeAgentName,
     conversationEnded,
     sendReply,
     onAudioStart,
     onAudioComplete,
+    verdicts,
+    classify,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
@@ -77,7 +81,7 @@ export function WhatsAppChat({
           </div>
 
           {rendered.map((turn, i) => (
-            <WhatsAppTurn key={i} turn={turn} time={timeFor(i)} />
+            <WhatsAppTurn key={i} turn={turn} time={timeFor(i)} verdicts={verdicts} onClassify={classify} />
           ))}
 
           {typing && (
@@ -105,7 +109,7 @@ export function WhatsAppChat({
         )}
 
         <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2.5 dark:bg-[#1f2c34]">
-          {awaitingReply && pending?.kind === "reply" ? (
+          {readyToReply && pending?.kind === "reply" ? (
             <button
               onClick={sendReply}
               className="flex-1 truncate rounded-full border border-emerald-300 bg-white px-4 py-2 text-left text-sm text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
@@ -127,7 +131,17 @@ export function WhatsAppChat({
   )
 }
 
-function WhatsAppTurn({ turn, time }: { turn: ChatTurn; time: string }) {
+function WhatsAppTurn({
+  turn,
+  time,
+  verdicts,
+  onClassify,
+}: {
+  turn: ChatTurn
+  time: string
+  verdicts: Record<string, TxnVerdict>
+  onClassify: (itemId: string, verdict: TxnVerdict) => void
+}) {
   switch (turn.kind) {
     case "alert":
       return (
@@ -190,23 +204,16 @@ function WhatsAppTurn({ turn, time }: { turn: ChatTurn; time: string }) {
       )
     case "transactions":
       return (
-        <Card>
-          {turn.items.map((item, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex items-center justify-between py-1.5 text-xs",
-                i !== turn.items.length - 1 && "border-b border-border/60",
-              )}
-            >
-              <div>
-                <div className="font-medium text-foreground">{item.label}</div>
-                <div className="text-muted-foreground">{item.time}</div>
-              </div>
-              <div className="font-medium text-foreground">{item.amount}</div>
-            </div>
+        <div className="mx-auto max-w-[85%] space-y-2">
+          {turn.items.map((item) => (
+            <TxnRow
+              key={item.id}
+              item={item}
+              verdict={verdicts[item.id]}
+              onClassify={(v) => onClassify(item.id, v)}
+            />
           ))}
-        </Card>
+        </div>
       )
     case "payment":
       return (
