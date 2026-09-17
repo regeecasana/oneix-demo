@@ -132,12 +132,12 @@ export function ChatWidget({
             <FaceIdScan />
           </div>
         )}
-        {typing && pending?.kind === "system" && (
+        {typing && (pending?.kind === "system" || pending?.kind === "handoff") && (
           <div className="flex justify-center">
             <SystemPulse />
           </div>
         )}
-        {typing && pending?.kind !== "faceid" && pending?.kind !== "system" && (
+        {typing && pending?.kind !== "faceid" && pending?.kind !== "system" && pending?.kind !== "handoff" && (
           <div className="flex items-end gap-2">
             <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
             <TypingDots />

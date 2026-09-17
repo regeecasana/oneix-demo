@@ -46,6 +46,8 @@ export const audioMap: AudioMap = {
     "fraud-agent-5": { src: "/audio/bfsi/fraud/jordan/5.mp3" },
     "fraud-agent-6": { src: "/audio/bfsi/fraud/jordan/6.mp3" },
     "fraud-agent-7": { src: "/audio/bfsi/fraud/jordan/7.mp3" },
+    // "Connecting you to Jordan · Account Protection" — chime, not dialogue.
+    "fraud-handoff-1": { src: DING },
   },
   collections: {
     "collections-ai-1": { src: "/audio/bfsi/collection/ava/1.mp3" },
@@ -58,5 +60,7 @@ export const audioMap: AudioMap = {
     // "Here's everything I'm sharing with the specialist:" + the checklist + "You
     // won't need to repeat any of this." — one bubble, one clip covering all of it.
     "collections-checklist-1": { src: "/audio/bfsi/collection/ava/8.mp3" },
+    // "Connecting to Payment Assistance" — chime, not dialogue.
+    "collections-handoff-1": { src: DING },
   },
 }
