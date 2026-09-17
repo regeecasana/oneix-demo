@@ -20,7 +20,7 @@ const fraudScriptContent: ChatTurnContent[] = [
     speaker: "Ava",
     text: "I'm sorry — let's secure things first. You're already signed into the app. Before I make security changes, please confirm with Face ID. I will never ask you for your PIN, password, or a one-time code in this chat.",
   },
-  { kind: "system", text: "Identity confirmed." },
+  { kind: "faceid", text: "Identity confirmed via Face ID." },
   {
     kind: "message",
     from: "ai",

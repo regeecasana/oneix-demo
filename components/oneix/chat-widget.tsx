@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import type { ChatTurn } from "@/lib/oneix/types"
 import { audioMap } from "@/lib/oneix/audio-map"
 import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
-import { X, ShieldAlert } from "./icons"
+import { X, ShieldAlert, ScanFace, ShieldCheck } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 
 function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
@@ -33,6 +33,18 @@ function TypingDots() {
           style={{ animationDelay: `${i * 120}ms` }}
         />
       ))}
+    </div>
+  )
+}
+
+function FaceIdScan() {
+  return (
+    <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2.5">
+      <div className="relative flex size-5 shrink-0 items-center justify-center">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-400/60" />
+        <ScanFace className="relative size-4 text-teal-600 dark:text-teal-400" />
+      </div>
+      <span className="text-xs text-muted-foreground">Scanning Face ID…</span>
     </div>
   )
 }
@@ -78,9 +90,10 @@ export function ChatWidget({
     }
 
     const isMessage = pending.kind === "message"
-    const delay = isMessage ? 700 + Math.min(pending.text.length * 12, 1100) : 500
+    const isFaceId = pending.kind === "faceid"
+    const delay = isMessage ? 700 + Math.min(pending.text.length * 12, 1100) : isFaceId ? 1600 : 500
 
-    if (isMessage) setTyping(true)
+    if (isMessage || isFaceId) setTyping(true)
     const t = setTimeout(() => {
       setTyping(false)
       if (pending.kind === "handoff") setHandoffTo(pending.to)
@@ -132,7 +145,12 @@ export function ChatWidget({
         {rendered.map((turn, i) => (
           <TurnView key={i} turn={turn} />
         ))}
-        {typing && (
+        {typing && pending?.kind === "faceid" && (
+          <div className="flex justify-center">
+            <FaceIdScan />
+          </div>
+        )}
+        {typing && pending?.kind !== "faceid" && (
           <div className="flex items-end gap-2">
             <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
             <TypingDots />
@@ -223,6 +241,13 @@ function TurnView({ turn }: { turn: ChatTurn }) {
     case "system":
       return (
         <div className="text-center text-[11px] text-muted-foreground italic">{turn.text}</div>
+      )
+    case "faceid":
+      return (
+        <div className="flex items-center justify-center gap-1.5 py-0.5 text-xs font-medium text-teal-700 dark:text-teal-300">
+          <ShieldCheck className="size-3.5" />
+          {turn.text}
+        </div>
       )
     case "handoff":
       return (
