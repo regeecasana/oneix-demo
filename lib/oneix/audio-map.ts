@@ -47,5 +47,14 @@ export const audioMap: AudioMap = {
     "fraud-agent-6": { src: "/audio/bfsi/fraud/jordan/6.mp3" },
     "fraud-agent-7": { src: "/audio/bfsi/fraud/jordan/7.mp3" },
   },
-  collections: {},
+  collections: {
+    "collections-ai-1": { src: "/audio/bfsi/collection/ava/1.mp3" },
+    "collections-ai-2": { src: "/audio/bfsi/collection/ava/2.mp3" },
+    "collections-ai-3": { src: "/audio/bfsi/collection/ava/3.mp3" },
+    "collections-ai-4": { src: "/audio/bfsi/collection/ava/4.mp3" },
+    "collections-ai-5": { src: "/audio/bfsi/collection/ava/5.mp3" },
+    "collections-ai-6": { src: "/audio/bfsi/collection/ava/6.mp3" },
+    "collections-ai-7": { src: "/audio/bfsi/collection/ava/7.mp3" },
+    "collections-ai-8": { src: "/audio/bfsi/collection/ava/8.mp3" },
+  },
 }
