@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn } from "@/lib/oneix/types"
-import { audioMap } from "@/lib/oneix/audio-map"
-import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
+import { useChatScript } from "@/hooks/use-chat-script"
 import { X, ShieldAlert, ScanFace, ShieldCheck, Check } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 
@@ -76,64 +75,24 @@ export function ChatWidget({
   subtitle: string
   onClose: () => void
 }) {
-  const [rendered, setRendered] = useState<ChatTurn[]>([])
-  const [index, setIndex] = useState(0)
-  const [typing, setTyping] = useState(false)
-  const [handoffTo, setHandoffTo] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-
-  const pending = index < script.length ? script[index] : null
-  const awaitingReply = pending?.kind === "reply"
-
-  // Consecutive turns that share an audio `group` are the "sent together" bursts —
-  // null here just means "this turn has no mapped clip, use the timed fallback".
-  const batch = useMemo(
-    () => (pending ? getAudioBatch(audioMap, scenarioId, script, index) : null),
-    [scenarioId, script, index, pending],
-  )
-
-  useEffect(() => {
-    if (!pending || awaitingReply) return
-
-    if (batch) {
-      // TurnAudioPlayer below drives the reveal/advance via onStart/onComplete.
-      setTyping(true)
-      return
-    }
-
-    const isMessage = pending.kind === "message"
-    const isFaceId = pending.kind === "faceid"
-    const isChecklist = pending.kind === "checklist"
-    const delay = isMessage
-      ? 700 + Math.min(pending.text.length * 12, 1100)
-      : isFaceId
-        ? 1600
-        : isChecklist
-          ? 1200
-          : 500
-
-    if (isMessage || isFaceId || isChecklist) setTyping(true)
-    const t = setTimeout(() => {
-      setTyping(false)
-      if (pending.kind === "handoff") setHandoffTo(pending.to)
-      setRendered((r) => [...r, pending])
-      setIndex((i) => i + 1)
-    }, delay)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index])
+  const {
+    rendered,
+    pending,
+    typing,
+    awaitingReply,
+    batch,
+    handoffTo,
+    activeAgentName,
+    conversationEnded,
+    sendReply,
+    onAudioStart,
+    onAudioComplete,
+  } = useChatScript(scenarioId, script)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [rendered, typing])
-
-  function sendReply() {
-    if (!pending || pending.kind !== "reply") return
-    setRendered((r) => [...r, pending])
-    setIndex((i) => i + 1)
-  }
-
-  const activeAgentName = handoffTo ?? "Ava"
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex h-[min(640px,calc(100vh-2rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
@@ -180,24 +139,14 @@ export function ChatWidget({
             <TypingDots />
           </div>
         )}
-        {!pending && rendered.length > 0 && (
+        {conversationEnded && (
           <div className="pt-1 text-center text-[11px] text-muted-foreground">Conversation ended</div>
         )}
         <div ref={bottomRef} />
       </div>
 
       {batch && !awaitingReply && (
-        <TurnAudioPlayer
-          key={pending!.id}
-          clips={batch.clips}
-          onStart={() => {
-            setTyping(false)
-            setRendered((r) => [...r, ...batch.turns])
-            const handoffTurn = batch.turns.find((t) => t.kind === "handoff")
-            if (handoffTurn?.kind === "handoff") setHandoffTo(handoffTurn.to)
-          }}
-          onComplete={() => setIndex((i) => i + batch.turns.length)}
-        />
+        <TurnAudioPlayer key={pending!.id} clips={batch.clips} onStart={onAudioStart} onComplete={onAudioComplete} />
       )}
 
       <div className="border-t border-border px-4 py-3">
