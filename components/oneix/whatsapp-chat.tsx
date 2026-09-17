@@ -168,13 +168,17 @@ function WhatsAppTurn({
     case "checklist":
       return (
         <Bubble side="in" time={time}>
-          <div className="space-y-1">
-            {turn.items.map((item, i) => (
-              <div key={i} className="flex items-start gap-1.5">
-                <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
-                {item}
-              </div>
-            ))}
+          <div className="space-y-1.5">
+            {turn.intro && <div>{turn.intro}</div>}
+            <div className="space-y-1">
+              {turn.items.map((item, i) => (
+                <div key={i} className="flex items-start gap-1.5">
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+                  {item}
+                </div>
+              ))}
+            </div>
+            {turn.outro && <div>{turn.outro}</div>}
           </div>
         </Bubble>
       )

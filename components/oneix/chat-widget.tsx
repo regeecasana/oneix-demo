@@ -221,13 +221,17 @@ function TurnView({
           <Avatar label={turn.speaker[0]} tone={turn.from === "agent" ? "agent" : "ai"} />
           <div>
             <div className="mb-0.5 text-[10px] text-muted-foreground">{turn.speaker}</div>
-            <div className="max-w-[260px] space-y-1 rounded-2xl rounded-bl-sm bg-muted px-3 py-2">
-              {turn.items.map((item, i) => (
-                <div key={i} className="flex items-start gap-1.5 text-sm text-foreground">
-                  <Check className="mt-0.5 size-3.5 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={3} />
-                  {item}
-                </div>
-              ))}
+            <div className="max-w-[260px] space-y-1.5 rounded-2xl rounded-bl-sm bg-muted px-3 py-2">
+              {turn.intro && <div className="text-sm text-foreground">{turn.intro}</div>}
+              <div className="space-y-1">
+                {turn.items.map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-sm text-foreground">
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={3} />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              {turn.outro && <div className="text-sm text-foreground">{turn.outro}</div>}
             </div>
           </div>
         </div>

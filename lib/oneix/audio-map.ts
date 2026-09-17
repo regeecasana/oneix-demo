@@ -55,6 +55,8 @@ export const audioMap: AudioMap = {
     "collections-ai-5": { src: "/audio/bfsi/collection/ava/5.mp3" },
     "collections-ai-6": { src: "/audio/bfsi/collection/ava/6.mp3" },
     "collections-ai-7": { src: "/audio/bfsi/collection/ava/7.mp3" },
-    "collections-ai-8": { src: "/audio/bfsi/collection/ava/8.mp3" },
+    // "Here's everything I'm sharing with the specialist:" + the checklist + "You
+    // won't need to repeat any of this." — one bubble, one clip covering all of it.
+    "collections-checklist-1": { src: "/audio/bfsi/collection/ava/8.mp3" },
   },
 }

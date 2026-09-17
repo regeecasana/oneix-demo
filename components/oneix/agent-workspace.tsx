@@ -152,7 +152,9 @@ export function AgentWorkspace() {
               ) : t.kind === "checklist" ? (
                 <div key={i} className="text-xs">
                   <span className="font-medium text-foreground">{t.speaker}: </span>
-                  <span className="text-muted-foreground">{t.items.join(" · ")}</span>
+                  <span className="text-muted-foreground">
+                    {[t.intro, t.items.join(" · "), t.outro].filter(Boolean).join(" — ")}
+                  </span>
                 </div>
               ) : null,
             )}

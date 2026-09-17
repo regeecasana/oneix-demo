@@ -203,7 +203,13 @@ const collectionsScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "ai",
     speaker: "Ava",
-    text: "The standard arrangements require the full past-due amount sooner than your timeline. A hardship review is available but needs specialist approval. I'll collect what's needed so you won't have to start over.\n\nWould you prefer future account reminders by mobile app rather than phone calls?",
+    text: "The standard arrangements require the full past-due amount sooner than your timeline. A hardship review is available but needs specialist approval. I'll collect what's needed so you won't have to start over.",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Would you prefer future account reminders by mobile app rather than phone calls?",
   },
   {
     kind: "reply",
@@ -216,15 +222,10 @@ const collectionsScriptContent: ChatTurnContent[] = [
     text: "Done — I've set mobile app as your preferred channel and marked the former work number as unavailable.",
   },
   {
-    kind: "message",
-    from: "ai",
-    speaker: "Ava",
-    text: "Here's everything I'm sharing with the specialist:",
-  },
-  {
     kind: "checklist",
     from: "ai",
     speaker: "Ava",
+    intro: "Here's everything I'm sharing with the specialist:",
     items: [
       "$286.40 past due",
       "$100 available September 18",
@@ -232,12 +233,7 @@ const collectionsScriptContent: ChatTurnContent[] = [
       "Mobile app preferred",
       "Former work number removed",
     ],
-  },
-  {
-    kind: "message",
-    from: "ai",
-    speaker: "Ava",
-    text: "You won't need to repeat any of this.",
+    outro: "You won't need to repeat any of this.",
   },
   { kind: "handoff", to: "Sofia", role: "Payment Assistance" },
   {
