@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import type { ChatTurn } from "@/lib/oneix/types"
 import { audioMap } from "@/lib/oneix/audio-map"
 import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
-import { X, ShieldAlert, ScanFace, ShieldCheck } from "./icons"
+import { X, ShieldAlert, ScanFace, ShieldCheck, Check } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 
 function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
@@ -91,9 +91,16 @@ export function ChatWidget({
 
     const isMessage = pending.kind === "message"
     const isFaceId = pending.kind === "faceid"
-    const delay = isMessage ? 700 + Math.min(pending.text.length * 12, 1100) : isFaceId ? 1600 : 500
+    const isChecklist = pending.kind === "checklist"
+    const delay = isMessage
+      ? 700 + Math.min(pending.text.length * 12, 1100)
+      : isFaceId
+        ? 1600
+        : isChecklist
+          ? 1200
+          : 500
 
-    if (isMessage || isFaceId) setTyping(true)
+    if (isMessage || isFaceId || isChecklist) setTyping(true)
     const t = setTimeout(() => {
       setTyping(false)
       if (pending.kind === "handoff") setHandoffTo(pending.to)
@@ -226,6 +233,23 @@ function TurnView({ turn }: { turn: ChatTurn }) {
               )}
             >
               {turn.text}
+            </div>
+          </div>
+        </div>
+      )
+    case "checklist":
+      return (
+        <div className="flex items-end gap-2">
+          <Avatar label={turn.speaker[0]} tone={turn.from === "agent" ? "agent" : "ai"} />
+          <div>
+            <div className="mb-0.5 text-[10px] text-muted-foreground">{turn.speaker}</div>
+            <div className="max-w-[260px] space-y-1 rounded-2xl rounded-bl-sm bg-muted px-3 py-2">
+              {turn.items.map((item, i) => (
+                <div key={i} className="flex items-start gap-1.5 text-sm text-foreground">
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={3} />
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
         </div>

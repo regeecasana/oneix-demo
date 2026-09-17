@@ -27,6 +27,7 @@ export type ChatTurnContent =
     }
   | { kind: "system"; text: string }
   | { kind: "faceid"; text: string }
+  | { kind: "checklist"; from: "ai" | "agent"; speaker: string; items: string[] }
   | { kind: "handoff"; to: string; role: string }
   | { kind: "transactions"; items: { label: string; amount: string; time: string }[] }
   | { kind: "payment"; title: string; source: string; rows: { label: string; amount: string }[]; total: string }

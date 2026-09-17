@@ -24,7 +24,7 @@ export function AgentWorkspace() {
   const [selected, setSelected] = useState<string>(queue[0].scenarioId)
   const item = caseFiles[selected]
   const transcript = scriptsByScenario[selected].filter(
-    (t) => t.kind === "message" || t.kind === "reply",
+    (t) => t.kind === "message" || t.kind === "reply" || t.kind === "checklist",
   )
 
   return (
@@ -148,6 +148,11 @@ export function AgentWorkspace() {
                 <div key={i} className="text-xs">
                   <span className="font-medium text-foreground">{item.customer.split(" ")[0]}: </span>
                   <span className="text-muted-foreground">{t.text}</span>
+                </div>
+              ) : t.kind === "checklist" ? (
+                <div key={i} className="text-xs">
+                  <span className="font-medium text-foreground">{t.speaker}: </span>
+                  <span className="text-muted-foreground">{t.items.join(" · ")}</span>
                 </div>
               ) : null,
             )}
