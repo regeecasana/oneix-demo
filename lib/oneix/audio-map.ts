@@ -15,7 +15,8 @@ import type { AudioMap } from "./types"
  * Directory convention: audio/{industry}/{scenarioId}/{speakerSlug}/{clip}.mp3
  * — keyed by the actual character speaking (ava, jordan, sofia, ...) rather than
  * a fixed "ai vs agent" role, since a scenario isn't guaranteed to have exactly
- * one of each.
+ * one of each. Non-dialogue sound effects (chimes, dings) that aren't tied to a
+ * character or scenario live in audio/sfx/{clip}.mp3 instead.
  */
 export const audioMap: AudioMap = {
   fraud: {
@@ -25,8 +26,10 @@ export const audioMap: AudioMap = {
     "fraud-ai-2": {
       src: "/audio/bfsi/fraud/ava/2.mp3",
     },
+    // Short confirmation chime, not a spoken line — drop the file at
+    // public/audio/sfx/ding.mp3 to wire it in.
     "fraud-faceid-1": {
-      src: "/audio/bfsi/fraud/ava/3.mp3",
+      src: "/audio/sfx/ding.mp3",
     },
   },
   collections: {},
