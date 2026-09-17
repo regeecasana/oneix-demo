@@ -17,6 +17,9 @@ export interface IndustryDef {
   scenarios: ScenarioSummary[]
 }
 
+/** A customer's classification of a flagged transaction. */
+export type TxnVerdict = "mine" | "unknown"
+
 export type ChatTurnContent =
   | { kind: "alert"; title: string; lines: string[] }
   | { kind: "message"; from: "ai" | "agent"; speaker: string; text: string }
@@ -29,7 +32,7 @@ export type ChatTurnContent =
   | { kind: "faceid"; text: string }
   | { kind: "checklist"; from: "ai" | "agent"; speaker: string; items: string[] }
   | { kind: "handoff"; to: string; role: string }
-  | { kind: "transactions"; items: { label: string; amount: string; time: string }[] }
+  | { kind: "transactions"; items: { id: string; label: string; amount: string; time: string }[] }
   | { kind: "payment"; title: string; source: string; rows: { label: string; amount: string }[]; total: string }
   | { kind: "status"; title: string; rows: { label: string; value: string; positive?: boolean }[] }
 

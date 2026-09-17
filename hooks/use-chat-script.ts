@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { AudioBatch } from "@/lib/oneix/get-audio-batch"
 import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
 import { audioMap } from "@/lib/oneix/audio-map"
-import type { ChatTurn } from "@/lib/oneix/types"
+import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 
 /**
  * Drives a scripted conversation turn-by-turn: typed/timed reveal for turns with
@@ -18,9 +18,22 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const [index, setIndex] = useState(0)
   const [typing, setTyping] = useState(false)
   const [handoffTo, setHandoffTo] = useState<string | null>(null)
+  const [verdicts, setVerdicts] = useState<Record<string, TxnVerdict>>({})
 
   const pending = index < script.length ? script[index] : null
   const awaitingReply = pending?.kind === "reply"
+
+  // A reply immediately after a "transactions" turn stays hidden until every
+  // item in that turn has been classified (see TxnCard) — the presenter picks
+  // "This was me" / "Don't recognize" per item before the customer can respond.
+  const lastRendered = rendered[rendered.length - 1]
+  const requiresClassification =
+    lastRendered?.kind === "transactions" && lastRendered.items.some((item) => !verdicts[item.id])
+  const readyToReply = awaitingReply && !requiresClassification
+
+  function classify(itemId: string, verdict: TxnVerdict) {
+    setVerdicts((v) => (v[itemId] ? v : { ...v, [itemId]: verdict }))
+  }
 
   // Consecutive turns that share an audio `group` are the "sent together" bursts —
   // null here just means "this turn has no mapped clip, use the timed fallback".
@@ -62,7 +75,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   }, [index])
 
   function sendReply() {
-    if (!pending || pending.kind !== "reply") return
+    if (!pending || pending.kind !== "reply" || requiresClassification) return
     setRendered((r) => [...r, pending])
     setIndex((i) => i + 1)
   }
@@ -85,6 +98,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     pending,
     typing,
     awaitingReply,
+    readyToReply,
     batch,
     handoffTo,
     activeAgentName: handoffTo ?? "Ava",
@@ -92,5 +106,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     sendReply,
     onAudioStart,
     onAudioComplete,
+    verdicts,
+    classify,
   }
 }
