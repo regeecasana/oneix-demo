@@ -7,6 +7,7 @@ import { useChatScript } from "@/hooks/use-chat-script"
 import { X, ShieldAlert, ScanFace, ShieldCheck, Check } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
+import { ReplyChoices } from "./reply-choices"
 
 function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
   return (
@@ -155,12 +156,20 @@ export function ChatWidget({
 
       <div className="border-t border-border px-4 py-3">
         {readyToReply && pending?.kind === "reply" ? (
-          <button
-            onClick={sendReply}
-            className="w-full rounded-xl border border-teal-300 bg-teal-50 px-3 py-2 text-left text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
-          >
-            {pending.text}
-          </button>
+          pending.choices ? (
+            <ReplyChoices
+              choices={pending.choices}
+              activeClassName="border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
+              onSelect={sendReply}
+            />
+          ) : (
+            <button
+              onClick={sendReply}
+              className="w-full rounded-xl border border-teal-300 bg-teal-50 px-3 py-2 text-left text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
+            >
+              {pending.text}
+            </button>
+          )
         ) : (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             {pending ? "Waiting for response…" : title}

@@ -8,6 +8,8 @@ export interface ScenarioSummary {
   title: string
   description: string
   available: boolean
+  /** Push-notification copy shown before an outbound scenario's chat opens. */
+  notification?: { sender: string; body: string }
 }
 
 export interface IndustryDef {
@@ -27,6 +29,14 @@ export type ChatTurnContent =
       kind: "reply"
       text: string
       helper?: string
+      /**
+       * Renders as several labeled buttons instead of the default single chip
+       * (e.g. "Keep delayed flight" / "Move me to 7:05 AM" / "Show other
+       * options"). Exactly one should be `correct` — clicking it sends `text`
+       * as the reply; the others are shown disabled, since this demo only has
+       * one scripted path.
+       */
+      choices?: { label: string; correct?: boolean }[]
     }
   | { kind: "system"; text: string }
   | { kind: "faceid"; text: string }

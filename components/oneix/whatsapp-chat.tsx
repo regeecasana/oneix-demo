@@ -6,6 +6,7 @@ import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
+import { ReplyChoices } from "./reply-choices"
 import { ArrowLeft, Video, Phone, X, Send, Mic, Check } from "./icons"
 
 /** Fake, incrementing clock for the demo — starts at 10:23 AM, +1 min per bubble. */
@@ -108,8 +109,18 @@ export function WhatsAppChat({
           <TurnAudioPlayer key={pending!.id} clips={batch.clips} onStart={onAudioStart} onComplete={onAudioComplete} />
         )}
 
+        {readyToReply && pending?.kind === "reply" && pending.choices && (
+          <div className="border-t border-black/5 bg-[#f7f7f7] px-3 pt-2.5 pb-1 dark:border-white/5 dark:bg-[#111b21]">
+            <ReplyChoices
+              choices={pending.choices}
+              activeClassName="border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
+              onSelect={sendReply}
+            />
+          </div>
+        )}
+
         <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2.5 dark:bg-[#1f2c34]">
-          {readyToReply && pending?.kind === "reply" ? (
+          {readyToReply && pending?.kind === "reply" && !pending.choices ? (
             <button
               onClick={sendReply}
               className="flex-1 truncate rounded-full border border-emerald-300 bg-white px-4 py-2 text-left text-sm text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"

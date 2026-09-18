@@ -60,8 +60,10 @@ export function DemoApp() {
             openScenarioId={chatOpen || toastOpen ? (scenario?.id ?? null) : null}
           />
 
-          {toastOpen && !chatOpen && scenario && (
+          {toastOpen && !chatOpen && scenario && scenario.notification && (
             <NotificationToast
+              sender={scenario.notification.sender}
+              body={scenario.notification.body}
               onReview={() => {
                 setToastOpen(false)
                 setChatOpen(true)

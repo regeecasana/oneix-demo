@@ -3,9 +3,13 @@
 import { Bell } from "./icons"
 
 export function NotificationToast({
+  sender,
+  body,
   onReview,
   onDismiss,
 }: {
+  sender: string
+  body: string
   onReview: () => void
   onDismiss: () => void
 }) {
@@ -16,11 +20,8 @@ export function NotificationToast({
           <Bell className="size-4" />
         </div>
         <div className="flex-1">
-          <div className="text-xs font-semibold text-foreground">NorthStar Bank</div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Daniel, your account ending 4821 needs attention. We have payment and assistance options
-            available. Review them securely in the NorthStar app.
-          </p>
+          <div className="text-xs font-semibold text-foreground">{sender}</div>
+          <p className="mt-0.5 text-xs text-muted-foreground">{body}</p>
           <div className="mt-3 flex gap-2">
             <button
               onClick={onReview}
