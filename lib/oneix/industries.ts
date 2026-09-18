@@ -19,6 +19,10 @@ export const industries: IndustryDef[] = [
         title: "Payment Collection",
         description: "Bank proactively reaches out to a customer with a past-due balance.",
         available: true,
+        notification: {
+          sender: "NorthStar Bank",
+          body: "Daniel, your account ending 4821 needs attention. We have payment and assistance options available. Review them securely in the NorthStar app.",
+        },
       },
     ],
   },
@@ -39,7 +43,11 @@ export const industries: IndustryDef[] = [
         direction: "outbound",
         title: "Flight Disruption",
         description: "Airline proactively reaches out to a traveler about a delayed flight.",
-        available: false,
+        available: true,
+        notification: {
+          sender: "Orchid Air",
+          body: "Daniel, your flight OA720 to Tokyo Haneda tomorrow has been delayed. We've already checked alternatives — review your options in the app.",
+        },
       },
     ],
   },

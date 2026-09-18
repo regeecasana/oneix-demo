@@ -429,10 +429,68 @@ const rebookingScriptContent: ChatTurnContent[] = [
 
 export const rebookingScript = withTurnIds("rebooking", rebookingScriptContent)
 
+const disruptionScriptContent: ChatTurnContent[] = [
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Hi Daniel, this is Orchid Air.\n\nYour flight OA720 from Singapore to Tokyo Haneda tomorrow has been delayed by 3 hours 30 minutes.\n\nI've already checked alternatives based on your booking.\n\nI can move you to OA712 at 7:05 AM, arriving Tokyo at 2:55 PM, with no rebooking charge under today's disruption policy.\n\nYour aisle-seat preference and checked baggage can be retained.",
+  },
+  {
+    kind: "reply",
+    text: "Move me to the 7:05. I have a 5pm meeting in Marunouchi.",
+    choices: [
+      { label: "Keep delayed flight" },
+      { label: "Move me to 7:05 AM", correct: true },
+      { label: "Show other options" },
+    ],
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Understood. The earlier flight is the safer option for that schedule.\n\nI'm holding your seat while I reissue the ticket.",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Done — you're now confirmed on OA712 departing Singapore at 7:05 AM.\n\nYour seat is 18C, aisle.\n\nI've sent your updated itinerary and boarding information to your email.\n\nBecause the new departure is earlier, I've also changed your app reminder to 4:45 AM Singapore time.",
+  },
+  { kind: "reply", text: "Great. What happens to the seat upgrade I paid for on the original flight?" },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Your paid extra-legroom seat could not be matched on the new flight. I can see a S$48 unused charge on the disrupted itinerary.\n\nI can submit that amount for refund to the original payment method now.",
+  },
+  { kind: "reply", text: "Yes, refund it." },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Done. Refund reference RF-804312 has been created for S$48.\n\nYou don't need to submit a separate claim.",
+  },
+  {
+    kind: "status",
+    title: "Trip Status",
+    rows: [
+      { label: "Flight", value: "OA712 — 7:05 AM" },
+      { label: "Seat", value: "18C, aisle — retained" },
+      { label: "App reminder", value: "Updated to 4:45 AM" },
+      { label: "Refund", value: "RF-804312 — S$48", positive: true },
+      { label: "Customer action needed", value: "NONE", positive: true },
+    ],
+  },
+]
+
+export const disruptionScript = withTurnIds("disruption", disruptionScriptContent)
+
 export const scriptsByScenario: Record<string, ChatTurn[]> = {
   fraud: fraudScript,
   collections: collectionsScript,
   rebooking: rebookingScript,
+  disruption: disruptionScript,
 }
 
 export const caseFiles: Record<string, CaseFile> = {
