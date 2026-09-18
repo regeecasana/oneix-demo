@@ -28,7 +28,7 @@ export function TopNav({
             "rounded-md px-2 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs",
             view === "customer"
               ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           Customer View
@@ -39,7 +39,7 @@ export function TopNav({
             "rounded-md px-2 py-1 text-[11px] font-medium transition-colors sm:px-3 sm:text-xs",
             view === "agent"
               ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           Agent Workspace
@@ -47,13 +47,6 @@ export function TopNav({
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="hidden items-center gap-1.5 text-xs text-teal-600 sm:flex dark:text-teal-400">
-          <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-500 opacity-75 dark:bg-teal-400" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-teal-500 dark:bg-teal-400" />
-          </span>
-          Live demo
-        </div>
         <ThemeToggle />
       </div>
     </header>
