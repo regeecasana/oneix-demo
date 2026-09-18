@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
-import { X, ShieldAlert, ScanFace, ShieldCheck, Check } from "./icons"
+import { X, ShieldAlert, ScanFace, ShieldCheck, Check, Circle } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
@@ -85,8 +85,10 @@ export function ChatWidget({
     awaitingReply,
     readyToReply,
     batch,
-    handoffTo,
     activeAgentName,
+    activeAgentTone,
+    typingAgentName,
+    typingAgentTone,
     conversationEnded,
     sendReply,
     onAudioStart,
@@ -103,12 +105,12 @@ export function ChatWidget({
     <div className="fixed right-4 bottom-4 z-50 flex h-[min(640px,calc(100vh-2rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
       <div className="flex items-start justify-between border-b border-border bg-linear-to-r from-[#0b1f26] to-[#0a1520] px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
+          <Avatar label={activeAgentName[0]} tone={activeAgentTone} />
           <div>
             <div className="flex items-center gap-1.5 text-sm font-medium text-white">
               {activeAgentName}
               <span className="text-white/40">·</span>
-              <span className="text-white/50">{handoffTo ? "Live Agent" : "AI Assistant"}</span>
+              <span className="text-white/50">{activeAgentTone === "agent" ? "Live Agent" : "AI Assistant"}</span>
               <span className="ml-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-white/70">
                 {badgeLabel}
               </span>
@@ -140,7 +142,7 @@ export function ChatWidget({
         )}
         {typing && pending?.kind !== "faceid" && pending?.kind !== "system" && pending?.kind !== "handoff" && (
           <div className="flex items-end gap-2">
-            <Avatar label={activeAgentName[0]} tone={handoffTo ? "agent" : "ai"} />
+            <Avatar label={typingAgentName[0]} tone={typingAgentTone} />
             <TypingDots />
           </div>
         )}
@@ -240,6 +242,16 @@ function TurnView({
                   </div>
                 ))}
               </div>
+              {turn.pending && (
+                <div className="space-y-1">
+                  {turn.pending.map((item, i) => (
+                    <div key={i} className="flex items-start gap-1.5 text-sm text-muted-foreground">
+                      <Circle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/50" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              )}
               {turn.outro && <div className="text-sm text-foreground">{turn.outro}</div>}
             </div>
           </div>

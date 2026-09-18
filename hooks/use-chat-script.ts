@@ -13,15 +13,37 @@ import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
  * (the corner widget, the WhatsApp-style screen, ...) so the timing/audio logic
  * only lives in one place.
  */
+interface ActiveSpeaker {
+  name: string
+  tone: "ai" | "agent"
+}
+
+/** Who the header/typing-indicator should show as currently speaking — derived
+ * from the last message/checklist/handoff turn revealed, not just whether a
+ * handoff ever happened, so the header correctly flips back to Ava if she
+ * resumes the conversation after a live agent. */
+function speakerFor(turn: ChatTurn): ActiveSpeaker | null {
+  if (turn.kind === "message" || turn.kind === "checklist") {
+    return { name: turn.speaker, tone: turn.from === "agent" ? "agent" : "ai" }
+  }
+  if (turn.kind === "handoff") {
+    return { name: turn.to, tone: "agent" }
+  }
+  return null
+}
+
 export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const [rendered, setRendered] = useState<ChatTurn[]>([])
   const [index, setIndex] = useState(0)
   const [typing, setTyping] = useState(false)
-  const [handoffTo, setHandoffTo] = useState<string | null>(null)
+  const [activeSpeaker, setActiveSpeaker] = useState<ActiveSpeaker>({ name: "Ava", tone: "ai" })
   const [verdicts, setVerdicts] = useState<Record<string, TxnVerdict>>({})
 
   const pending = index < script.length ? script[index] : null
   const awaitingReply = pending?.kind === "reply"
+  // Who the typing indicator's avatar should show — the *pending* turn's
+  // speaker if it has one, so it doesn't lag a turn behind on a handoff.
+  const typingSpeaker = (pending && speakerFor(pending)) || activeSpeaker
 
   // A reply immediately after a "transactions" turn stays hidden until every
   // item in that turn has been classified (see TxnCard) — the presenter picks
@@ -66,7 +88,8 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     if (isMessage || isFaceId || isChecklist) setTyping(true)
     const t = setTimeout(() => {
       setTyping(false)
-      if (pending.kind === "handoff") setHandoffTo(pending.to)
+      const speaker = speakerFor(pending)
+      if (speaker) setActiveSpeaker(speaker)
       setRendered((r) => [...r, pending])
       setIndex((i) => i + 1)
     }, delay)
@@ -84,8 +107,10 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     if (!batch) return
     setTyping(false)
     setRendered((r) => [...r, ...batch.turns])
-    const handoffTurn = batch.turns.find((t) => t.kind === "handoff")
-    if (handoffTurn?.kind === "handoff") setHandoffTo(handoffTurn.to)
+    for (const turn of batch.turns) {
+      const speaker = speakerFor(turn)
+      if (speaker) setActiveSpeaker(speaker)
+    }
   }
 
   function onAudioComplete() {
@@ -100,8 +125,10 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     awaitingReply,
     readyToReply,
     batch,
-    handoffTo,
-    activeAgentName: handoffTo ?? "Ava",
+    activeAgentName: activeSpeaker.name,
+    activeAgentTone: activeSpeaker.tone,
+    typingAgentName: typingSpeaker.name,
+    typingAgentTone: typingSpeaker.tone,
     conversationEnded: !pending && rendered.length > 0,
     sendReply,
     onAudioStart,

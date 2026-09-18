@@ -46,6 +46,9 @@ export type ChatTurnContent =
       speaker: string
       intro?: string
       items: string[]
+      /** A second, unchecked list shown after `items` — "here's what's still
+       * needed" rather than "here's what's done". */
+      pending?: string[]
       outro?: string
     }
   | { kind: "handoff"; to: string; role: string }

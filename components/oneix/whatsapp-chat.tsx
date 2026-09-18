@@ -7,7 +7,7 @@ import { useChatScript } from "@/hooks/use-chat-script"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
-import { ArrowLeft, Video, Phone, X, Send, Mic, Check } from "./icons"
+import { ArrowLeft, Video, Phone, X, Send, Mic, Check, Circle } from "./icons"
 
 /** Fake, incrementing clock for the demo — starts at 10:23 AM, +1 min per bubble. */
 function timeFor(i: number) {
@@ -36,6 +36,7 @@ export function WhatsAppChat({
     readyToReply,
     batch,
     activeAgentName,
+    activeAgentTone,
     conversationEnded,
     sendReply,
     onAudioStart,
@@ -59,7 +60,9 @@ export function WhatsAppChat({
             {activeAgentName[0]}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{activeAgentName} · AI Assistant</div>
+            <div className="truncate text-sm font-medium">
+              {activeAgentName} · {activeAgentTone === "agent" ? "Live Agent" : "AI Assistant"}
+            </div>
             <div className="text-[11px] text-white/70">online</div>
           </div>
           <Video className="size-[18px] shrink-0 text-white/90" />
@@ -189,6 +192,16 @@ function WhatsAppTurn({
                 </div>
               ))}
             </div>
+            {turn.pending && (
+              <div className="space-y-1">
+                {turn.pending.map((item, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                    <Circle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/50" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            )}
             {turn.outro && <div>{turn.outro}</div>}
           </div>
         </Bubble>

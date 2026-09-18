@@ -19,6 +19,7 @@ import {
   Phone,
   Send,
   Mic,
+  Circle,
 } from "lucide-react"
 import type { IndustryDef } from "@/lib/oneix/types"
 
@@ -46,4 +47,5 @@ export {
   Phone,
   Send,
   Mic,
+  Circle,
 }
