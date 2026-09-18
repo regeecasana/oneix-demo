@@ -62,5 +62,12 @@ export const audioMap: AudioMap = {
     "collections-checklist-1": { src: "/audio/bfsi/collection/ava/8.mp3" },
     // "Connecting to Payment Assistance" — chime, not dialogue.
     "collections-handoff-1": { src: DING },
+    "collections-agent-1": { src: "/audio/bfsi/collection/jordan/1.mp3" },
+    "collections-agent-2": { src: "/audio/bfsi/collection/jordan/2.mp3" },
+    "collections-agent-3": { src: "/audio/bfsi/collection/jordan/3.mp3" },
+    "collections-agent-4": { src: "/audio/bfsi/collection/jordan/4.mp3" },
+    "collections-agent-5": { src: "/audio/bfsi/collection/jordan/5.mp3" },
+    "collections-agent-6": { src: "/audio/bfsi/collection/jordan/6.mp3" },
+    "collections-agent-7": { src: "/audio/bfsi/collection/jordan/7.mp3" },
   },
 }
