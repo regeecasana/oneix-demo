@@ -12,13 +12,13 @@ export function IndustryGrid({
   onSelectScenario,
   openScenarioId,
 }: {
-  activeIndustry: IndustryId
+  activeIndustry: IndustryId | null
   onSelectIndustry: (id: IndustryId) => void
   activeScenarioId: string | null
   onSelectScenario: (scenario: ScenarioSummary) => void
   openScenarioId: string | null
 }) {
-  const current = industries.find((i) => i.id === activeIndustry)!
+  const current = industries.find((i) => i.id === activeIndustry)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -54,52 +54,56 @@ export function IndustryGrid({
         })}
       </div>
 
-      <p className="mt-8 mb-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        Select a scenario
-      </p>
-      <div className="flex flex-col gap-3">
-        {current.scenarios.map((scenario) => {
-          const selected = scenario.id === activeScenarioId
-          const isOpen = scenario.id === openScenarioId
-          return (
-            <button
-              key={scenario.id}
-              disabled={!scenario.available}
-              onClick={() => onSelectScenario(scenario)}
-              className={cn(
-                "flex flex-col items-start rounded-xl border bg-card px-5 py-4 text-left transition-all",
-                scenario.available
-                  ? selected
-                    ? "border-teal-400 bg-teal-50 dark:bg-teal-950/30"
-                    : "border-border hover:border-teal-300/60 hover:shadow-sm"
-                  : "cursor-not-allowed border-border opacity-60",
-              )}
-            >
-              <span
-                className={cn(
-                  "mb-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
-                  scenario.direction === "inbound"
-                    ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                    : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
-                )}
-              >
-                {scenario.direction === "inbound" ? "↙ Inbound" : "↗ Outbound"}
-                {!scenario.available && <span className="ml-1 font-normal italic">· Coming soon</span>}
-              </span>
-              <span className="text-sm font-medium text-foreground">{scenario.title}</span>
-              <span className="mt-0.5 text-xs text-muted-foreground">{scenario.description}</span>
-              {isOpen && (
-                <span className="mt-2 flex items-center gap-1.5 text-xs text-teal-600">
-                  <span className="size-1.5 rounded-full bg-teal-500" />
-                  {scenario.direction === "inbound"
-                    ? "Chat widget opened — bottom right"
-                    : "Notification sent — bottom right"}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      {current && (
+        <>
+          <p className="mt-8 mb-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Select a scenario
+          </p>
+          <div className="flex flex-col gap-3">
+            {current.scenarios.map((scenario) => {
+              const selected = scenario.id === activeScenarioId
+              const isOpen = scenario.id === openScenarioId
+              return (
+                <button
+                  key={scenario.id}
+                  disabled={!scenario.available}
+                  onClick={() => onSelectScenario(scenario)}
+                  className={cn(
+                    "flex flex-col items-start rounded-xl border bg-card px-5 py-4 text-left transition-all",
+                    scenario.available
+                      ? selected
+                        ? "border-teal-400 bg-teal-50 dark:bg-teal-950/30"
+                        : "border-border hover:border-teal-300/60 hover:shadow-sm"
+                      : "cursor-not-allowed border-border opacity-60",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "mb-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
+                      scenario.direction === "inbound"
+                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                        : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+                    )}
+                  >
+                    {scenario.direction === "inbound" ? "↙ Inbound" : "↗ Outbound"}
+                    {!scenario.available && <span className="ml-1 font-normal italic">· Coming soon</span>}
+                  </span>
+                  <span className="text-sm font-medium text-foreground">{scenario.title}</span>
+                  <span className="mt-0.5 text-xs text-muted-foreground">{scenario.description}</span>
+                  {isOpen && (
+                    <span className="mt-2 flex items-center gap-1.5 text-xs text-teal-600">
+                      <span className="size-1.5 rounded-full bg-teal-500" />
+                      {scenario.direction === "inbound"
+                        ? "Chat widget opened — bottom right"
+                        : "Notification sent — bottom right"}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }

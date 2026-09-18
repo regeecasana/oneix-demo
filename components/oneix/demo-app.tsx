@@ -13,7 +13,7 @@ import type { IndustryId, ScenarioSummary } from "@/lib/oneix/types"
 
 export function DemoApp() {
   const [view, setView] = useState<"customer" | "agent">("customer")
-  const [industry, setIndustry] = useState<IndustryId>("banking")
+  const [industry, setIndustry] = useState<IndustryId | null>(null)
   const [scenario, setScenario] = useState<ScenarioSummary | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
   const [toastOpen, setToastOpen] = useState(false)
