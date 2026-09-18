@@ -278,6 +278,25 @@ function TurnView({
           ))}
         </div>
       )
+    case "options":
+      return (
+        <div className="rounded-xl border border-border bg-muted/30 p-2.5">
+          {turn.intro && <div className="mb-2 text-sm text-foreground">{turn.intro}</div>}
+          <div className="space-y-2">
+            {turn.options.map((opt) => (
+              <div key={opt.id} className="rounded-lg border border-border bg-card p-2">
+                <div className="text-sm font-semibold text-foreground">{opt.heading}</div>
+                {opt.lines.map((l, i) => (
+                  <div key={i} className="text-xs text-muted-foreground">
+                    {l}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {turn.outro && <div className="mt-2 text-sm text-foreground">{turn.outro}</div>}
+        </div>
+      )
     case "payment":
       return (
         <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-3 text-xs dark:border-teal-900/50 dark:bg-teal-950/20">

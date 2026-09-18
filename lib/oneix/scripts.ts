@@ -311,9 +311,128 @@ const collectionsScriptContent: ChatTurnContent[] = [
 
 export const collectionsScript = withTurnIds("collections", collectionsScriptContent)
 
+const rebookingScriptContent: ChatTurnContent[] = [
+  {
+    kind: "reply",
+    text: "Hi, I just saw that our Tokyo flight tomorrow morning has been cancelled. We're travelling with our daughter and already have a hotel booked. Can you put us on another flight?",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "I'm sorry, Mei Lin. I can see the affected booking for you, Wei Ming and Chloe from Singapore to Tokyo Haneda tomorrow.\n\nI also see Chloe's child-meal request, your three checked-baggage allowances and your current seat preferences. I'll keep those in mind.\n\nLet me check the rebooking options available under today's disruption policy.",
+  },
+  {
+    kind: "options",
+    intro: "I found three options that keep all three of you together:",
+    options: [
+      {
+        id: "narita-0815",
+        heading: "Option A — 8:15 AM tomorrow",
+        lines: ["Singapore → Tokyo Narita", "Arrives 4:20 PM", "No additional fare"],
+      },
+      {
+        id: "haneda-1310",
+        heading: "Option B — 1:10 PM tomorrow",
+        lines: ["Singapore → Tokyo Haneda", "Arrives 9:05 PM", "No additional fare"],
+      },
+      {
+        id: "haneda-0705",
+        heading: "Option C — 7:05 AM the following day",
+        lines: ["Singapore → Tokyo Haneda", "Arrives 2:55 PM", "No additional fare"],
+      },
+    ],
+    outro: "Would you prefer the earlier Narita arrival or to keep Haneda and arrive later?",
+  },
+  {
+    kind: "reply",
+    text: "I prefer the 8:15 flight. But will all three of us definitely be moved? My husband's ticket was redeemed using my miles.",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "The 8:15 AM Narita flight has seats for all three of you.\n\nI can rebook you and Chloe automatically. Wei Ming's ticket is linked to a miles redemption, which requires a ticketing specialist to preserve the redemption correctly.",
+  },
+  {
+    kind: "checklist",
+    from: "ai",
+    speaker: "Ava",
+    intro: "I don't want you to repeat everything to another agent. I've already prepared the rebooking request with:",
+    items: [
+      "your preferred flight",
+      "all three passenger names",
+      "current baggage allowances",
+      "Chloe's child meal",
+      "family-seating request",
+      "the disruption waiver",
+      "the companion-ticket issue",
+    ],
+    outro: "I'll bring in a ticketing specialist now.",
+  },
+  { kind: "handoff", to: "Jordan", role: "Ticketing Specialist" },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Hi Mei Lin, I'm Jordan. Ava has passed everything to me, so you don't need to explain the situation again.\n\nI can see the 8:15 AM Narita option you selected. I'm just fixing the companion miles redemption on Wei Ming's ticket so that all three tickets are reissued together.",
+  },
+  { kind: "reply", text: "Thank you. Please make sure we sit together." },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Absolutely. I've secured 42A, 42B and 42C together and restored Chloe's child meal.\n\nAll three tickets have now been reissued.",
+  },
+  {
+    kind: "status",
+    title: "New Flight",
+    rows: [
+      { label: "Flight", value: "OA826" },
+      { label: "Departure", value: "Tomorrow, 8:15 AM" },
+      { label: "Route", value: "Singapore Changi → Tokyo Narita" },
+      { label: "Seats", value: "42A, 42B, 42C" },
+    ],
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "I've sent the new flight itinerary to your email.\n\nYour original booking was disrupted by the airline, so there was no rebooking fare difference in this policy.",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Would you like me to update the airport-transfer details in your trip checklist from Haneda to Narita?",
+  },
+  { kind: "reply", text: "Yes please." },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Done. I've updated your trip checklist for Narita.\n\nHave a good trip, Mei Lin. I hope the rest of your journey is much smoother.",
+  },
+  {
+    kind: "status",
+    title: "Trip Status",
+    rows: [
+      { label: "Flight OA826", value: "CONFIRMED", positive: true },
+      { label: "Family seating", value: "TOGETHER", positive: true },
+      { label: "Companion ticket", value: "REISSUED", positive: true },
+      { label: "Fare difference", value: "NONE", positive: true },
+      { label: "Trip checklist", value: "UPDATED (Narita)", positive: true },
+      { label: "Customer action needed", value: "NONE", positive: true },
+    ],
+  },
+]
+
+export const rebookingScript = withTurnIds("rebooking", rebookingScriptContent)
+
 export const scriptsByScenario: Record<string, ChatTurn[]> = {
   fraud: fraudScript,
   collections: collectionsScript,
+  rebooking: rebookingScript,
 }
 
 export const caseFiles: Record<string, CaseFile> = {
@@ -370,5 +489,31 @@ export const caseFiles: Record<string, CaseFile> = {
       "If accepted, launch secure authorization workflow",
     ],
     reason: "Requested schedule falls outside standard offer engine — requires exception authority.",
+  },
+  rebooking: {
+    id: "OA826",
+    scenarioId: "rebooking",
+    customer: "Mei Lin Tan",
+    authNote: "Authenticated mobile-app session",
+    intent: "Disrupted flight rebooking with a loyalty companion-ticket exception",
+    facts: [
+      "Party: Mei Lin Tan, Wei Ming, Chloe (age 6)",
+      "Original flight to Tokyo Haneda cancelled",
+      "Selected replacement: OA826, tomorrow 8:15 AM, Singapore → Tokyo Narita",
+      "Wei Ming's ticket issued via loyalty companion redemption",
+      "Chloe has a child-meal request and needs family seating",
+      "Disruption waiver applies — no rebooking fare difference",
+    ],
+    actionsCompleted: [
+      "Mei Lin and Chloe rebooked onto OA826 automatically",
+      "Rebooking request prepared for ticketing specialist",
+      "Baggage, child meal and family-seating requests carried over",
+    ],
+    recommendation: [
+      "Reissue Wei Ming's companion ticket preserving the miles redemption",
+      "Confirm family seating together",
+      "Restore child-meal special service request",
+    ],
+    reason: "Companion miles-redemption ticket requires an authorized ticketing specialist to reissue correctly.",
   },
 }

@@ -219,6 +219,25 @@ function WhatsAppTurn({
           ))}
         </div>
       )
+    case "options":
+      return (
+        <Card>
+          {turn.intro && <div className="mb-2 text-sm text-foreground">{turn.intro}</div>}
+          <div className="space-y-2">
+            {turn.options.map((opt) => (
+              <div key={opt.id} className="rounded-lg border border-border/60 p-2">
+                <div className="text-sm font-semibold text-foreground">{opt.heading}</div>
+                {opt.lines.map((l, i) => (
+                  <div key={i} className="text-xs text-muted-foreground">
+                    {l}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {turn.outro && <div className="mt-2 text-sm text-foreground">{turn.outro}</div>}
+        </Card>
+      )
     case "payment":
       return (
         <Card>

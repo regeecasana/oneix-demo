@@ -40,6 +40,12 @@ export type ChatTurnContent =
     }
   | { kind: "handoff"; to: string; role: string }
   | {
+      kind: "options"
+      intro?: string
+      options: { id: string; heading: string; lines: string[] }[]
+      outro?: string
+    }
+  | {
       kind: "transactions"
       items: { id: string; label: string; amount: string; time: string; correctVerdict: TxnVerdict }[]
     }
