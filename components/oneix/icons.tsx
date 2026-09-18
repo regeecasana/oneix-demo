@@ -1,7 +1,7 @@
 import {
   Landmark,
-  ShoppingBag,
   Globe,
+  GraduationCap,
   Heart,
   Check,
   X,
@@ -24,8 +24,8 @@ import type { IndustryDef } from "@/lib/oneix/types"
 
 export const industryIcons: Record<IndustryDef["icon"], typeof Landmark> = {
   landmark: Landmark,
-  "shopping-bag": ShoppingBag,
   globe: Globe,
+  "graduation-cap": GraduationCap,
   heart: Heart,
 }
 

@@ -1,4 +1,4 @@
-export type IndustryId = "banking" | "retail" | "travel" | "healthcare"
+export type IndustryId = "banking" | "travel" | "education" | "healthcare"
 
 export type ScenarioDirection = "inbound" | "outbound"
 
@@ -13,7 +13,7 @@ export interface ScenarioSummary {
 export interface IndustryDef {
   id: IndustryId
   label: string
-  icon: "landmark" | "shopping-bag" | "globe" | "heart"
+  icon: "landmark" | "globe" | "graduation-cap" | "heart"
   scenarios: ScenarioSummary[]
 }
 
