@@ -5,7 +5,10 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "alert",
     title: "FRAUD ALERT",
-    lines: ["$1,284.67 at LUXEMARKET.COM", "Debit card ····1842 · \"This wasn't me\""],
+    lines: [
+      "$1,284.67 at LUXEMARKET.COM",
+      'Debit card ····1842 · "This wasn\'t me"',
+    ],
   },
   {
     kind: "message",
@@ -50,8 +53,20 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "transactions",
     items: [
-      { id: "quickcash-atm", label: "QuickCash ATM", amount: "$600.00", time: "Today, 9:51 AM", correctVerdict: "unknown" },
-      { id: "metroride", label: "MetroRide", amount: "$19.42", time: "Today, 8:14 AM", correctVerdict: "mine" },
+      {
+        id: "quickcash-atm",
+        label: "QuickCash ATM",
+        amount: "$600.00",
+        time: "Today, 9:51 AM",
+        correctVerdict: "unknown",
+      },
+      {
+        id: "metroride",
+        label: "MetroRide",
+        amount: "$19.42",
+        time: "Today, 8:14 AM",
+        correctVerdict: "mine",
+      },
     ],
   },
   { kind: "reply", text: "Got it — please continue." },
@@ -115,7 +130,10 @@ const fraudScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "Card 1842 is frozen, LUXEMARKET and the $600 ATM withdrawal are disputed, MetroRide is yours, and you received a suspicious call yesterday. You don't need to repeat any of that.",
   },
-  { kind: "reply", text: "That's a relief. Can they still log into my bank account?" },
+  {
+    kind: "reply",
+    text: "That's a relief. Can they still log into my bank account?",
+  },
   { kind: "system", text: "Reviewing recent access and security changes…" },
   {
     kind: "message",
@@ -123,7 +141,10 @@ const fraudScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "I found a login yesterday evening from a device we haven't seen before. I don't see any new payees or successful transfers from that session. I'm revoking all other sessions now, and replacing your card rather than unfreezing it, since its credentials should be treated as compromised.",
   },
-  { kind: "reply", text: "Okay — will I be without a card tonight? I need groceries." },
+  {
+    kind: "reply",
+    text: "Okay — will I be without a card tonight? I need groceries.",
+  },
   {
     kind: "message",
     from: "agent",
@@ -143,7 +164,10 @@ const fraudScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "Everything I can see is secure now: the compromised card is blocked, the replacement is active digitally, other sessions are revoked, and your claim is open. Is there anything about today we haven't covered?",
   },
-  { kind: "reply", text: "No. I thought I'd spend an hour on the phone. Thank you." },
+  {
+    kind: "reply",
+    text: "No. I thought I'd spend an hour on the phone. Thank you.",
+  },
   {
     kind: "message",
     from: "agent",
@@ -171,7 +195,10 @@ const collectionsScriptContent: ChatTurnContent[] = [
   {
     kind: "alert",
     title: "ACCOUNT NEEDS ATTENTION",
-    lines: ["$286.40 past due · Rewards ••••4821", "Payment options are available."],
+    lines: [
+      "$286.40 past due · Rewards ••••4821",
+      "Payment options are available.",
+    ],
   },
   {
     kind: "message",
@@ -179,7 +206,10 @@ const collectionsScriptContent: ChatTurnContent[] = [
     speaker: "Ava",
     text: "Hi Daniel. I'm Ava. I'm reaching out about your Rewards account ending in 4821. As of today, there's a past-due balance of $286.40. I'm here to help find a solution that works for you.",
   },
-  { kind: "reply", text: "I got laid off two weeks ago. The automatic payment bounced." },
+  {
+    kind: "reply",
+    text: "I got laid off two weeks ago. The automatic payment bounced.",
+  },
   {
     kind: "message",
     from: "ai",
@@ -192,7 +222,10 @@ const collectionsScriptContent: ChatTurnContent[] = [
     speaker: "Ava",
     text: "What would be most realistic for you right now?",
   },
-  { kind: "reply", text: "I can do $100 this Friday Sep 18. Unemployment starts around Oct 2." },
+  {
+    kind: "reply",
+    text: "I can do $100 this Friday Sep 18. Unemployment starts around Oct 2.",
+  },
   {
     kind: "message",
     from: "ai",
@@ -287,7 +320,10 @@ const collectionsScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "Before we finish: if your situation changes and one of these payments no longer works, contact us before the payment date. The app will bring you directly back to this arrangement, so Ava will see what we've already agreed.",
   },
-  { kind: "reply", text: "Okay. Thank you for actually making this manageable." },
+  {
+    kind: "reply",
+    text: "Okay. Thank you for actually making this manageable.",
+  },
   {
     kind: "message",
     from: "agent",
@@ -304,12 +340,19 @@ const collectionsScriptContent: ChatTurnContent[] = [
       { label: "Collections outreach", value: "SUPPRESSED", positive: true },
       { label: "Plan reminders", value: "ACTIVE", positive: true },
       { label: "Former work number", value: "SUPPRESSED", positive: true },
-      { label: "Customer action needed", value: "NONE until Sep 18", positive: true },
+      {
+        label: "Customer action needed",
+        value: "NONE until Sep 18",
+        positive: true,
+      },
     ],
   },
 ]
 
-export const collectionsScript = withTurnIds("collections", collectionsScriptContent)
+export const collectionsScript = withTurnIds(
+  "collections",
+  collectionsScriptContent
+)
 
 const rebookingScriptContent: ChatTurnContent[] = [
   {
@@ -329,20 +372,33 @@ const rebookingScriptContent: ChatTurnContent[] = [
       {
         id: "narita-0815",
         heading: "Option A — 8:15 AM tomorrow",
-        lines: ["Singapore → Tokyo Narita", "Arrives 4:20 PM", "No additional fare"],
+        lines: [
+          "Singapore → Tokyo Narita",
+          "Arrives 4:20 PM",
+          "No additional fare",
+        ],
       },
       {
         id: "haneda-1310",
         heading: "Option B — 1:10 PM tomorrow",
-        lines: ["Singapore → Tokyo Haneda", "Arrives 9:05 PM", "No additional fare"],
+        lines: [
+          "Singapore → Tokyo Haneda",
+          "Arrives 9:05 PM",
+          "No additional fare",
+        ],
       },
       {
         id: "haneda-0705",
         heading: "Option C — 7:05 AM the following day",
-        lines: ["Singapore → Tokyo Haneda", "Arrives 2:55 PM", "No additional fare"],
+        lines: [
+          "Singapore → Tokyo Haneda",
+          "Arrives 2:55 PM",
+          "No additional fare",
+        ],
       },
     ],
-    outro: "Would you prefer the earlier Narita arrival or to keep Haneda and arrive later?",
+    outro:
+      "Would you prefer the earlier Narita arrival or to keep Haneda and arrive later?",
   },
   {
     kind: "reply",
@@ -358,7 +414,8 @@ const rebookingScriptContent: ChatTurnContent[] = [
     kind: "checklist",
     from: "ai",
     speaker: "Ava",
-    intro: "I don't want you to repeat everything to another agent. I've already prepared the rebooking request with:",
+    intro:
+      "I don't want you to repeat everything to another agent. I've already prepared the rebooking request with:",
     items: [
       "your preferred flight",
       "all three passenger names",
@@ -375,7 +432,13 @@ const rebookingScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Mei Lin, I'm Jordan. Ava has passed everything to me, so you don't need to explain the situation again.\n\nI can see the 8:15 AM Narita option you selected. I'm just fixing the companion miles redemption on Wei Ming's ticket so that all three tickets are reissued together.",
+    text: "Hi Mei Lin, I'm Jordan. Ava has passed everything to me, so you don't need to explain the situation again.",
+  },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "I can see the 8:15 AM Narita option you selected. I'm just fixing the companion miles redemption on Wei Ming's ticket so that all three tickets are reissued together.",
   },
   { kind: "reply", text: "Thank you. Please make sure we sit together." },
   {
@@ -457,7 +520,10 @@ const disruptionScriptContent: ChatTurnContent[] = [
     speaker: "Ava",
     text: "Done — you're now confirmed on OA712 departing Singapore at 7:05 AM.\n\nYour seat is 18C, aisle.\n\nI've sent your updated itinerary and boarding information to your email.\n\nBecause the new departure is earlier, I've also changed your app reminder to 4:45 AM Singapore time.",
   },
-  { kind: "reply", text: "Great. What happens to the seat upgrade I paid for on the original flight?" },
+  {
+    kind: "reply",
+    text: "Great. What happens to the seat upgrade I paid for on the original flight?",
+  },
   {
     kind: "message",
     from: "ai",
@@ -484,7 +550,10 @@ const disruptionScriptContent: ChatTurnContent[] = [
   },
 ]
 
-export const disruptionScript = withTurnIds("disruption", disruptionScriptContent)
+export const disruptionScript = withTurnIds(
+  "disruption",
+  disruptionScriptContent
+)
 
 const admissionsScriptContent: ChatTurnContent[] = [
   {
@@ -524,9 +593,19 @@ const admissionsScriptContent: ChatTurnContent[] = [
     kind: "checklist",
     from: "ai",
     speaker: "Ava",
-    intro: "I found the application you started on September 8. You're about 80% complete. You do not need to restart it.\n\nHere's what's already complete:",
-    items: ["Personal information", "Employment history", "Programme selection", "Personal statement"],
-    pending: ["Academic credential", "Employer reference", "Application declaration"],
+    intro:
+      "I found the application you started on September 8. You're about 80% complete. You do not need to restart it.\n\nHere's what's already complete:",
+    items: [
+      "Personal information",
+      "Employment history",
+      "Programme selection",
+      "Personal statement",
+    ],
+    pending: [
+      "Academic credential",
+      "Employer reference",
+      "Application declaration",
+    ],
     outro:
       "Your academic credential appears to be available as a digital certificate. Would you like to provide the digital credential instead of uploading scanned copies?",
   },
@@ -579,7 +658,8 @@ const admissionsScriptContent: ChatTurnContent[] = [
       "four years of data-analytics employment history",
       "your requested Applied AI programme",
     ],
-    outro: "I'll bring in an admissions adviser who can review whether this should go to the academic credit-assessment panel.",
+    outro:
+      "I'll bring in an admissions adviser who can review whether this should go to the academic credit-assessment panel.",
   },
   { kind: "handoff", to: "Jordan", role: "Admissions" },
   {
@@ -588,7 +668,10 @@ const admissionsScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "Hi Priya, I'm Jordan from Admissions.\n\nAva has passed me your application and the verified credential, including your request for advanced standing.\n\nI can see you've completed modules in databases, programming and statistics, plus your recent analytics experience.\n\nI can't promise an exemption at this stage because the academic school makes the final decision, but I can submit the assessment request now without asking you for the same documents again.",
   },
-  { kind: "reply", text: "Yes please. Do I need to wait for that before submitting my application?" },
+  {
+    kind: "reply",
+    text: "Yes please. Do I need to wait for that before submitting my application?",
+  },
   {
     kind: "message",
     from: "agent",
@@ -601,7 +684,10 @@ const admissionsScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "Priya, your advanced-standing review has been created as AS-20641.\n\nTo finish the admissions application, only two actions remain:\nEmployer reference — I can email your nominated referee a secure link.\nDeclaration — you can complete this now.\n\nShall we finish both?",
   },
-  { kind: "reply", text: "Yes. Send the reference to my manager, Melissa Wong." },
+  {
+    kind: "reply",
+    text: "Yes. Send the reference to my manager, Melissa Wong.",
+  },
   {
     kind: "message",
     from: "agent",
@@ -622,13 +708,20 @@ const admissionsScriptContent: ChatTurnContent[] = [
       { label: "Admissions application", value: "In progress" },
       { label: "Academic credential", value: "VERIFIED", positive: true },
       { label: "Advanced-standing review", value: "AS-20641 — Under review" },
-      { label: "Employer reference", value: "Sent to Melissa Wong", positive: true },
+      {
+        label: "Employer reference",
+        value: "Sent to Melissa Wong",
+        positive: true,
+      },
       { label: "Declaration", value: "Pending — Priya to complete" },
     ],
   },
 ]
 
-export const admissionsScript = withTurnIds("admissions", admissionsScriptContent)
+export const admissionsScript = withTurnIds(
+  "admissions",
+  admissionsScriptContent
+)
 
 const enrolmentScriptContent: ChatTurnContent[] = [
   {
@@ -654,7 +747,10 @@ const enrolmentScriptContent: ChatTurnContent[] = [
     speaker: "Ava",
     text: "Thank you.\n\nBased on that date, the next suitable enrolment in the calendar is January 2028. I can prepare a deferment request for that.\n\nYour admissions offer will remain pending until Admissions approves the change.\n\nShall I submit the request?",
   },
-  { kind: "reply", text: "Yes. But my offer expires in five days. Will I lose my place while they review it?" },
+  {
+    kind: "reply",
+    text: "Yes. But my offer expires in five days. Will I lose my place while they review it?",
+  },
   {
     kind: "message",
     from: "ai",
@@ -756,7 +852,10 @@ const appointmentScriptContent: ChatTurnContent[] = [
     speaker: "Jordan",
     text: "Good. I'll change the appointment to Tuesday at 2:40 PM.",
   },
-  { kind: "system", text: "Appointment updated in patient-administration system." },
+  {
+    kind: "system",
+    text: "Appointment updated in patient-administration system.",
+  },
   {
     kind: "message",
     from: "ai",
@@ -781,7 +880,10 @@ const appointmentScriptContent: ChatTurnContent[] = [
   },
 ]
 
-export const appointmentScript = withTurnIds("appointment", appointmentScriptContent)
+export const appointmentScript = withTurnIds(
+  "appointment",
+  appointmentScriptContent
+)
 
 const previsitScriptContent: ChatTurnContent[] = [
   {
@@ -818,7 +920,8 @@ const previsitScriptContent: ChatTurnContent[] = [
     kind: "checklist",
     from: "ai",
     speaker: "Ava",
-    intro: "Your appointment is confirmed.\n\nFor this visit, your care team's instructions are:",
+    intro:
+      "Your appointment is confirmed.\n\nFor this visit, your care team's instructions are:",
     items: [
       "Complete the pre-visit questionnaire",
       "Bring your current medication list",
@@ -863,9 +966,16 @@ const previsitScriptContent: ChatTurnContent[] = [
     rows: [
       { label: "Appointment", value: "CONFIRMED", positive: true },
       { label: "Pre-visit instructions", value: "SENT", positive: true },
-      { label: "Medication question", value: "ANSWERED by care team", positive: true },
+      {
+        label: "Medication question",
+        value: "ANSWERED by care team",
+        positive: true,
+      },
       { label: "Care-team interaction", value: "RECORDED", positive: true },
-      { label: "Customer action needed", value: "Questionnaire + medication list" },
+      {
+        label: "Customer action needed",
+        value: "Questionnaire + medication list",
+      },
     ],
   },
 ]
@@ -910,7 +1020,8 @@ export const caseFiles: Record<string, CaseFile> = {
       "Revoke untrusted sessions",
       "Replace compromised debit card",
     ],
-    reason: "Potential social-engineering / account-takeover event — OTP disclosed to unverified caller.",
+    reason:
+      "Potential social-engineering / account-takeover event — OTP disclosed to unverified caller.",
   },
   collections: {
     id: "PT-441872",
@@ -936,14 +1047,16 @@ export const caseFiles: Record<string, CaseFile> = {
       "Explain impact/restrictions of a modified arrangement",
       "If accepted, launch secure authorization workflow",
     ],
-    reason: "Requested schedule falls outside standard offer engine — requires exception authority.",
+    reason:
+      "Requested schedule falls outside standard offer engine — requires exception authority.",
   },
   rebooking: {
     id: "OA826",
     scenarioId: "rebooking",
     customer: "Mei Lin Tan",
     authNote: "Authenticated mobile-app session",
-    intent: "Disrupted flight rebooking with a loyalty companion-ticket exception",
+    intent:
+      "Disrupted flight rebooking with a loyalty companion-ticket exception",
     facts: [
       "Party: Mei Lin Tan, Wei Ming, Chloe (age 6)",
       "Original flight to Tokyo Haneda cancelled",
@@ -962,14 +1075,16 @@ export const caseFiles: Record<string, CaseFile> = {
       "Confirm family seating together",
       "Restore child-meal special service request",
     ],
-    reason: "Companion miles-redemption ticket requires an authorized ticketing specialist to reissue correctly.",
+    reason:
+      "Companion miles-redemption ticket requires an authorized ticketing specialist to reissue correctly.",
   },
   admissions: {
     id: "AS-20641",
     scenarioId: "admissions",
     customer: "Priya Nair",
     authNote: "Authenticated applicant portal session",
-    intent: "Advanced-standing review combining prior diploma study and work experience",
+    intent:
+      "Advanced-standing review combining prior diploma study and work experience",
     facts: [
       "Singapore PR, applying to Bachelor of Computing — Applied AI",
       "Diploma in Information Technology — credential verified",
@@ -987,14 +1102,16 @@ export const caseFiles: Record<string, CaseFile> = {
       "Confirm exemption outcome cannot be promised before academic school review",
       "Send employer reference request to nominated referee",
     ],
-    reason: "Requested exemption combines prior study and work experience, which falls outside published articulation rules.",
+    reason:
+      "Requested exemption combines prior study and work experience, which falls outside published articulation rules.",
   },
   enrolment: {
     id: "AS-20641-DEF",
     scenarioId: "enrolment",
     customer: "Muhammad Irfan",
     authNote: "Authenticated applicant portal session",
-    intent: "Enrolment deferment due to National Service, offer expiring within the review window",
+    intent:
+      "Enrolment deferment due to National Service, offer expiring within the review window",
     facts: [
       "Conditional offer: Bachelor of Computing, enrolment deadline 22 September",
       "Currently serving National Service — expected completion August next year",
@@ -1009,14 +1126,16 @@ export const caseFiles: Record<string, CaseFile> = {
       "Place a temporary administrative hold on the offer",
       "Process the deferment request without requiring additional documents",
     ],
-    reason: "Offer expiry falls inside the standard deferment review window — requires an authorized administrative hold.",
+    reason:
+      "Offer expiry falls inside the standard deferment review window — requires an authorized administrative hold.",
   },
   appointment: {
     id: "CARD-FU-2041",
     scenarioId: "appointment",
     customer: "Madam Lim Hoon",
     authNote: "Authenticated hospital app session",
-    intent: "Cardiology follow-up reschedule request with a new clinical-safety signal",
+    intent:
+      "Cardiology follow-up reschedule request with a new clinical-safety signal",
     facts: [
       "Cardiology follow-up next Thursday, 10:20 AM",
       "Requested change reason: daughter (registered caregiver) cannot take leave",
@@ -1033,7 +1152,8 @@ export const caseFiles: Record<string, CaseFile> = {
       "Check clinic schedule for an earlier assessment slot",
       "Confirm caregiver can accompany the patient",
     ],
-    reason: "New or worsening symptom mentioned — routine rescheduling is not permitted without clinician review.",
+    reason:
+      "New or worsening symptom mentioned — routine rescheduling is not permitted without clinician review.",
   },
   "pre-visit": {
     id: "CARD-PV-2041",
@@ -1055,6 +1175,7 @@ export const caseFiles: Record<string, CaseFile> = {
       "Review patient-specific medication orders under role-based credentials",
       "Provide the approved guidance to the patient",
     ],
-    reason: "Medication advice is outside the AI's authorized scope — requires a licensed clinician.",
+    reason:
+      "Medication advice is outside the AI's authorized scope — requires a licensed clinician.",
   },
 }
