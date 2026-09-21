@@ -103,7 +103,7 @@ export interface AudioClip {
 export type AudioMap = Record<string, Record<string, AudioClip>>
 
 export type CaseSystem =
-  "Data Warehouse" | "CRM" | "Marketing/CDP" | "AI Orchestrator"
+  "Data Warehouse" | "CDP" | "Marketing" | "AI Orchestrator"
 
 /** One technical step, tagged with the system behind it. */
 export interface CaseStep {

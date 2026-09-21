@@ -24,16 +24,43 @@ export const caseFiles: Record<string, CaseFile> = {
       ". Card fraud is contained; her online-banking access still needs specialist review.",
     ],
     steps: [
-      { system: "Marketing/CDP", label: "Fraud engine event fired the outbound journey to the app" },
-      { system: "CRM", label: "Customer identified — profile and preferences loaded" },
-      { system: "AI Orchestrator", label: "Step-up authentication passed (Face ID)" },
-      { system: "AI Orchestrator", label: "Live card API queried — recent transactions retrieved" },
-      { system: "Data Warehouse", label: "Device and location history checked for the flagged charges" },
-      { system: "AI Orchestrator", label: "MetroRide authorized; ATM + LUXEMARKET disputed" },
-      { system: "AI Orchestrator", label: "Card ••••1842 blocked via card-management API" },
-      { system: "Data Warehouse", label: "OTP disclosure logged — account-takeover signal raised" },
-      { system: "CRM", label: "Fraud case FR-982741 created" },
-      { system: "AI Orchestrator", label: "Handoff package compiled for Account Protection" },
+      {
+        system: "Marketing",
+        label: "Fraud engine event fired the outbound journey to the app",
+      },
+      {
+        system: "CDP",
+        label: "Customer identified — profile and preferences loaded",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Step-up authentication passed (Face ID)",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Live card API queried — recent transactions retrieved",
+      },
+      {
+        system: "Data Warehouse",
+        label: "Device and location history checked for the flagged charges",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "MetroRide authorized; ATM + LUXEMARKET disputed",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Card ••••1842 blocked via card-management API",
+      },
+      {
+        system: "Data Warehouse",
+        label: "OTP disclosure logged — account-takeover signal raised",
+      },
+      { system: "CDP", label: "Fraud case FR-982741 created" },
+      {
+        system: "AI Orchestrator",
+        label: "Handoff package compiled for Account Protection",
+      },
     ],
     handoffNote:
       "Full context transferred · Card frozen · 2 transactions disputed · ATO signal flagged · Customer briefed",
@@ -68,16 +95,43 @@ export const caseFiles: Record<string, CaseFile> = {
       " and a hardship plan needs specialist approval. He asked to be contacted by app only and to drop his former work number — both already applied.",
     ],
     steps: [
-      { system: "Marketing/CDP", label: "Delinquency event received — treatment stage reached" },
-      { system: "Data Warehouse", label: "Delinquency, payment and contact history loaded" },
-      { system: "Marketing/CDP", label: "Journey engine chose the channel from consent + preferences" },
-      { system: "AI Orchestrator", label: "Live balance retrieved from the collections system" },
-      { system: "AI Orchestrator", label: "Hardship signal detected (job loss, bounced payment)" },
-      { system: "AI Orchestrator", label: "Offer engine: no standard plan matches the schedule" },
-      { system: "CRM", label: "Contact preference set to mobile app" },
-      { system: "Marketing/CDP", label: "Former work number suppressed from outreach" },
-      { system: "CRM", label: "Case PT-441872 opened with the hardship intake" },
-      { system: "AI Orchestrator", label: "Handoff package compiled for Payment Assistance" },
+      {
+        system: "Marketing",
+        label: "Delinquency event received — treatment stage reached",
+      },
+      {
+        system: "Data Warehouse",
+        label: "Delinquency, payment and contact history loaded",
+      },
+      {
+        system: "Marketing",
+        label: "Journey engine chose the channel from consent + preferences",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Live balance retrieved from the collections system",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Hardship signal detected (job loss, bounced payment)",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Offer engine: no standard plan matches the schedule",
+      },
+      { system: "CDP", label: "Contact preference set to mobile app" },
+      {
+        system: "Marketing",
+        label: "Former work number suppressed from outreach",
+      },
+      {
+        system: "CDP",
+        label: "Case PT-441872 opened with the hardship intake",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Handoff package compiled for Payment Assistance",
+      },
     ],
     handoffNote:
       "Hardship intake complete · $100 on Sep 18 · No payment before Oct 2 · Work number suppressed",
@@ -115,14 +169,38 @@ export const caseFiles: Record<string, CaseFile> = {
       ", which needs an authorized ticketing specialist to reissue without losing the redemption.",
     ],
     steps: [
-      { system: "CRM", label: "Authenticated session resolved the customer's identity" },
-      { system: "CRM", label: "Profile loaded — party of 3, child-meal request" },
-      { system: "Data Warehouse", label: "Trip and seat-preference history checked" },
-      { system: "AI Orchestrator", label: "Disruption policy + same-day inventory queried" },
-      { system: "AI Orchestrator", label: "3 rebooking options returned; customer chose 8:15 Narita" },
-      { system: "AI Orchestrator", label: "Auto-reissue approved for Mei Lin and Chloe" },
-      { system: "AI Orchestrator", label: "Policy engine flagged the companion-ticket exception" },
-      { system: "CRM", label: "Ticketing case created with a structured handoff" },
+      {
+        system: "CDP",
+        label: "Authenticated session resolved the customer's identity",
+      },
+      {
+        system: "CDP",
+        label: "Profile loaded — party of 3, child-meal request",
+      },
+      {
+        system: "Data Warehouse",
+        label: "Trip and seat-preference history checked",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Disruption policy + same-day inventory queried",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "3 rebooking options returned; customer chose 8:15 Narita",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Auto-reissue approved for Mei Lin and Chloe",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Policy engine flagged the companion-ticket exception",
+      },
+      {
+        system: "CDP",
+        label: "Ticketing case created with a structured handoff",
+      },
     ],
     handoffNote:
       "Booking, party, baggage, child meal, seating and waiver attached · Companion-ticket issue flagged",
@@ -159,15 +237,36 @@ export const caseFiles: Record<string, CaseFile> = {
       "No human handoff was needed.",
     ],
     steps: [
-      { system: "Marketing/CDP", label: "FLIGHT_DELAYED OA720 SIN-HND +210 MIN received" },
-      { system: "Data Warehouse", label: "Affected passengers identified from booking history" },
-      { system: "CRM", label: "Profile and seat/baggage preferences loaded" },
-      { system: "AI Orchestrator", label: "Alternatives checked; OA712 offered under disruption policy" },
-      { system: "Marketing/CDP", label: "Consent and channel checked; WhatsApp message sent" },
-      { system: "AI Orchestrator", label: "Inventory held, waiver ticket exchange authorized" },
-      { system: "AI Orchestrator", label: "Seat 18C restored; itinerary emailed" },
-      { system: "Marketing/CDP", label: "App reminder moved to 4:45 AM" },
-      { system: "AI Orchestrator", label: "Unused S$48 seat charge refunded (RF-804312)" },
+      {
+        system: "Marketing",
+        label: "FLIGHT_DELAYED OA720 SIN-HND +210 MIN received",
+      },
+      {
+        system: "Data Warehouse",
+        label: "Affected passengers identified from booking history",
+      },
+      { system: "CDP", label: "Profile and seat/baggage preferences loaded" },
+      {
+        system: "AI Orchestrator",
+        label: "Alternatives checked; OA712 offered under disruption policy",
+      },
+      {
+        system: "Marketing",
+        label: "Consent and channel checked; WhatsApp message sent",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Inventory held, waiver ticket exchange authorized",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Seat 18C restored; itinerary emailed",
+      },
+      { system: "Marketing", label: "App reminder moved to 4:45 AM" },
+      {
+        system: "AI Orchestrator",
+        label: "Unused S$48 seat charge refunded (RF-804312)",
+      },
     ],
     handoffNote: "Resolved by AI end to end — no handoff needed",
     recommendation: [
@@ -203,14 +302,32 @@ export const caseFiles: Record<string, CaseFile> = {
       " could shorten the degree. That combination is outside the published exemption rules, so Ava prepared the case for an admissions adviser rather than answering.",
     ],
     steps: [
-      { system: "AI Orchestrator", label: "Applicant status captured — Singapore PR" },
-      { system: "AI Orchestrator", label: "Admissions rules engine confirmed the standard pathway" },
-      { system: "CRM", label: "Saved application retrieved — 80% complete" },
-      { system: "Data Warehouse", label: "Earlier visits and the abandoned steps read" },
-      { system: "AI Orchestrator", label: "Digital credential verified (issuer signature)" },
-      { system: "CRM", label: "Duplicate scanned-diploma requirement removed" },
-      { system: "AI Orchestrator", label: "Articulation rules gap — review exception created" },
-      { system: "CRM", label: "Admissions case opened with the verified record" },
+      {
+        system: "AI Orchestrator",
+        label: "Applicant status captured — Singapore PR",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Admissions rules engine confirmed the standard pathway",
+      },
+      { system: "CDP", label: "Saved application retrieved — 80% complete" },
+      {
+        system: "Data Warehouse",
+        label: "Earlier visits and the abandoned steps read",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Digital credential verified (issuer signature)",
+      },
+      { system: "CDP", label: "Duplicate scanned-diploma requirement removed" },
+      {
+        system: "AI Orchestrator",
+        label: "Articulation rules gap — review exception created",
+      },
+      {
+        system: "CDP",
+        label: "Admissions case opened with the verified record",
+      },
     ],
     handoffNote:
       "Verified credential, transcript and employment history attached · Advanced-standing exception flagged",
@@ -245,13 +362,32 @@ export const caseFiles: Record<string, CaseFile> = {
       " — before the standard review can finish. An admissions officer must place a temporary administrative hold.",
     ],
     steps: [
-      { system: "Data Warehouse", label: "Warehouse flagged an incomplete offer journey" },
-      { system: "Data Warehouse", label: "Signals read: repeat portal visits, deposit and deferment pages" },
-      { system: "Marketing/CDP", label: "Consent + channel preference checked before outreach" },
-      { system: "AI Orchestrator", label: "Blocker identified — National Service timing" },
-      { system: "AI Orchestrator", label: "Deferment policy retrieved; next intake January 2028" },
-      { system: "AI Orchestrator", label: "Offer expiry falls inside the review window" },
-      { system: "CRM", label: "Exception case compiled for Admissions" },
+      {
+        system: "Data Warehouse",
+        label: "Warehouse flagged an incomplete offer journey",
+      },
+      {
+        system: "Data Warehouse",
+        label:
+          "Signals read: repeat portal visits, deposit and deferment pages",
+      },
+      {
+        system: "Marketing",
+        label: "Consent + channel preference checked before outreach",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Blocker identified — National Service timing",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Deferment policy retrieved; next intake January 2028",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Offer expiry falls inside the review window",
+      },
+      { system: "CDP", label: "Exception case compiled for Admissions" },
     ],
     handoffNote:
       "Offer, NS completion date, requested intake and deadline attached · Temporary hold recommended",
@@ -285,11 +421,26 @@ export const caseFiles: Record<string, CaseFile> = {
       " walking this week. Ava stopped the routine reschedule, gave no diagnosis or advice, and routed her to the cardiology care team with the appointment and symptom summary.",
     ],
     steps: [
-      { system: "CRM", label: "Patient identified in the hospital app; appointment retrieved" },
-      { system: "AI Orchestrator", label: "Clinical-safety policy triggered symptom screening" },
-      { system: "AI Orchestrator", label: "New breathlessness detected — routine reschedule stopped" },
-      { system: "AI Orchestrator", label: "Approved safety response used — no diagnosis generated" },
-      { system: "CRM", label: "Nurse-triage case created with the symptom summary" },
+      {
+        system: "CDP",
+        label: "Patient identified in the hospital app; appointment retrieved",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Clinical-safety policy triggered symptom screening",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "New breathlessness detected — routine reschedule stopped",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Approved safety response used — no diagnosis generated",
+      },
+      {
+        system: "CDP",
+        label: "Nurse-triage case created with the symptom summary",
+      },
     ],
     handoffNote:
       "Appointment and symptom summary attached · No routine postponement made · Patient consented to handoff",
@@ -323,12 +474,27 @@ export const caseFiles: Record<string, CaseFile> = {
       ". That is outside Ava's authorized scope, so she escalated with the appointment context instead of answering.",
     ],
     steps: [
-      { system: "Marketing/CDP", label: "APPOINTMENT_T_MINUS_48H event emitted" },
-      { system: "Marketing/CDP", label: "Consent + channel preference checked; reminder sent" },
-      { system: "CRM", label: "Confirmation written back to the scheduling record" },
-      { system: "AI Orchestrator", label: "Provider-approved pre-visit instructions retrieved" },
-      { system: "AI Orchestrator", label: "Medication question detected — outside AI scope" },
-      { system: "CRM", label: "Care-team case created with the conversation summary" },
+      { system: "Marketing", label: "APPOINTMENT_T_MINUS_48H event emitted" },
+      {
+        system: "Marketing",
+        label: "Consent + channel preference checked; reminder sent",
+      },
+      {
+        system: "CDP",
+        label: "Confirmation written back to the scheduling record",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Provider-approved pre-visit instructions retrieved",
+      },
+      {
+        system: "AI Orchestrator",
+        label: "Medication question detected — outside AI scope",
+      },
+      {
+        system: "CDP",
+        label: "Care-team case created with the conversation summary",
+      },
     ],
     handoffNote:
       "Appointment context and medication question attached · No medication guidance given by AI",

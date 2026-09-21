@@ -6,6 +6,7 @@ import { scriptsByScenario } from "@/lib/oneix/scripts"
 import { caseFiles } from "@/lib/oneix/cases"
 import { industries } from "@/lib/oneix/industries"
 import { useLiveSession } from "@/hooks/use-live-session"
+import { LIVE_WINDOW_MS } from "@/lib/oneix/live-session"
 import type {
   CaseFile,
   CaseStep,
@@ -27,8 +28,8 @@ import { ThemeToggle } from "./theme-toggle"
 
 const SYSTEMS: CaseSystem[] = [
   "Data Warehouse",
-  "CRM",
-  "Marketing/CDP",
+  "CDP",
+  "Marketing",
   "AI Orchestrator",
 ]
 const AGENT_NAME = "Jordan"
@@ -36,9 +37,6 @@ const AGENT_NAME = "Jordan"
 const SCENARIOS = industries.flatMap((i) => i.scenarios)
 const directionOf = (scenarioId: string) =>
   SCENARIOS.find((sc) => sc.id === scenarioId)?.direction ?? "inbound"
-
-/** A customer demo counts as live if the relay heard from it this recently. */
-const LIVE_WINDOW_MS = 10 * 60 * 1000
 
 /** Demo clock: the session starts at 10:41 AM and each step/message adds a minute. */
 function clock(offset: number) {
@@ -129,7 +127,7 @@ export function AgentWorkspace() {
   const steps: CaseStep[] = isAccepted
     ? [
         ...doneSteps,
-        { system: "CRM", label: `Handoff accepted by ${AGENT_NAME}` },
+        { system: "CDP", label: `Handoff accepted by ${AGENT_NAME}` },
       ]
     : doneSteps
   // Live, the header follows the AI's latest step like a stepper. On a finished
@@ -237,7 +235,7 @@ export function AgentWorkspace() {
             <div className="mx-auto max-w-xl rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-center font-mono text-[11px] text-teal-800 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-300">
               {direction === "outbound"
                 ? `Outbound journey · ${item.channel} · Consent checked · Ava AI assigned${notified ? " · Notification sent, waiting for the customer" : ""}`
-                : `Session started · ${item.channel} · CRM context loaded · Ava AI assigned`}
+                : `Session started · ${item.channel} · CDP context loaded · Ava AI assigned`}
             </div>
 
             {before.map((turn, i) => (
