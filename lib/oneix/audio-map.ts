@@ -70,6 +70,13 @@ export const audioMap: AudioMap = {
     "collections-agent-6": { src: "/audio/bfsi/collection/jordan/6.mp3" },
     "collections-agent-7": { src: "/audio/bfsi/collection/jordan/7.mp3" },
   },
+  disruption: {
+    "disruption-ai-1": { src: "/audio/travel/disruption/ava/1.mp3" },
+    "disruption-ai-2": { src: "/audio/travel/disruption/ava/2.mp3" },
+    "disruption-ai-3": { src: "/audio/travel/disruption/ava/3.mp3" },
+    "disruption-ai-4": { src: "/audio/travel/disruption/ava/4.mp3" },
+    "disruption-ai-5": { src: "/audio/travel/disruption/ava/5.mp3" },
+  },
   rebooking: {
     "rebooking-ai-1": { src: "/audio/travel/rebook/ava/1.mp3" },
     // The three-option card (intro + Options A/B/C + closing question) is one clip.
