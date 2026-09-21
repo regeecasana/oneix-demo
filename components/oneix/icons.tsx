@@ -25,6 +25,9 @@ import {
   RefreshCw,
   TriangleAlert,
   User,
+  Workflow,
+  BrainCircuit,
+  ChevronDown,
 } from "lucide-react"
 import type { IndustryDef } from "@/lib/oneix/types"
 
@@ -58,4 +61,7 @@ export {
   RefreshCw,
   TriangleAlert,
   User,
+  Workflow,
+  BrainCircuit,
+  ChevronDown,
 }
