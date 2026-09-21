@@ -86,14 +86,33 @@ export interface AudioClip {
 
 export type AudioMap = Record<string, Record<string, AudioClip>>
 
+export type CaseSystem = "Data Warehouse" | "CRM" | "Marketing/CDP" | "AI Orchestrator"
+
+/** A run of summary text, optionally highlighted. */
+export type SummaryPart = string | { text: string; tone: "danger" | "warn" }
+
+/** The ticket an AI-to-human handoff opens on the Agent Workspace. */
 export interface CaseFile {
   id: string
   scenarioId: string
   customer: string
-  authNote: string
-  intent: string
-  facts: string[]
-  actionsCompleted: string[]
+  /** One-line issue shown under the name in the queue. */
+  subject: string
+  priority: "High" | "Medium"
+  /** Time already spent waiting for an agent, e.g. "2m". */
+  waiting: string
+  /** Customer tier / product badge next to the name. */
+  tier: string
+  /** Issue badge next to the tier. */
+  issue: string
+  channel: string
+  /** Enterprise systems the AI drew on — lit up in the header. */
+  systems: CaseSystem[]
+  summary: SummaryPart[]
+  /** Technical steps the AI orchestrator took, in order. */
+  steps: string[]
+  /** Text on the "AI Handoff" card in the transcript. */
+  handoffNote: string
   recommendation: string[]
-  reason: string
+  profile: { label: string; value: string }[]
 }

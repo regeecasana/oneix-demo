@@ -20,6 +20,11 @@ import {
   Send,
   Mic,
   Circle,
+  Sparkles,
+  ArrowUp,
+  RefreshCw,
+  TriangleAlert,
+  User,
 } from "lucide-react"
 import type { IndustryDef } from "@/lib/oneix/types"
 
@@ -48,4 +53,9 @@ export {
   Send,
   Mic,
   Circle,
+  Sparkles,
+  ArrowUp,
+  RefreshCw,
+  TriangleAlert,
+  User,
 }

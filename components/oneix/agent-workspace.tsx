@@ -2,204 +2,801 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { caseFiles, scriptsByScenario } from "@/lib/oneix/scripts"
-import { Check, ArrowRight } from "./icons"
+import { scriptsByScenario } from "@/lib/oneix/scripts"
+import { caseFiles } from "@/lib/oneix/cases"
+import type {
+  CaseFile,
+  CaseSystem,
+  ChatTurn,
+  SummaryPart,
+} from "@/lib/oneix/types"
+import {
+  ArrowUp,
+  Check,
+  Circle,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  TriangleAlert,
+  User,
+} from "./icons"
+import { ThemeToggle } from "./theme-toggle"
 
-const queue = [
-  {
-    scenarioId: "fraud",
-    priority: "High",
-    channel: "Chat handoff",
-    waiting: "0m 12s",
-  },
-  {
-    scenarioId: "collections",
-    priority: "Standard",
-    channel: "Chat handoff",
-    waiting: "0m 04s",
-  },
-  {
-    scenarioId: "rebooking",
-    priority: "Standard",
-    channel: "Chat handoff",
-    waiting: "0m 08s",
-  },
-  {
-    scenarioId: "admissions",
-    priority: "Standard",
-    channel: "Chat handoff",
-    waiting: "0m 15s",
-  },
-  {
-    scenarioId: "enrolment",
-    priority: "High",
-    channel: "Chat handoff",
-    waiting: "0m 06s",
-  },
-  {
-    scenarioId: "appointment",
-    priority: "High",
-    channel: "Chat handoff",
-    waiting: "0m 09s",
-  },
-  {
-    scenarioId: "pre-visit",
-    priority: "Standard",
-    channel: "Chat handoff",
-    waiting: "0m 11s",
-  },
+const SYSTEMS: CaseSystem[] = [
+  "Data Warehouse",
+  "CRM",
+  "Marketing/CDP",
+  "AI Orchestrator",
 ]
+const AGENT_NAME = "Jordan"
+
+/** Demo clock: the session starts at 10:41 AM and each step/message adds a minute. */
+function clock(offset: number) {
+  const total = 10 * 60 + 41 + offset
+  const h24 = Math.floor(total / 60) % 24
+  const h12 = ((h24 + 11) % 12) + 1
+  return `${h12}:${String(total % 60).padStart(2, "0")}`
+}
 
 export function AgentWorkspace() {
-  const [selected, setSelected] = useState<string>(queue[0].scenarioId)
-  const item = caseFiles[selected]
-  const transcript = scriptsByScenario[selected].filter(
-    (t) => t.kind === "message" || t.kind === "reply" || t.kind === "checklist",
+  const cases = Object.values(caseFiles)
+  const [selectedId, setSelectedId] = useState(cases[0].scenarioId)
+  const [accepted, setAccepted] = useState<Set<string>>(new Set())
+  const [tab, setTab] = useState<"ai" | "handoff">("ai")
+  const [panel, setPanel] = useState<"summary" | "profile">("summary")
+
+  const item = caseFiles[selectedId]
+  const isAccepted = accepted.has(selectedId)
+
+  const script = scriptsByScenario[selectedId]
+  const handoffAt = script.findIndex((t) => t.kind === "handoff")
+  const before = script.slice(0, handoffAt)
+  const after = script.slice(handoffAt + 1)
+
+  const listed = cases.filter(
+    (c) => accepted.has(c.scenarioId) === (tab === "handoff")
   )
 
+  function accept() {
+    setAccepted((prev) => new Set(prev).add(selectedId))
+    setTab("handoff")
+  }
+
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-4 py-8 lg:grid-cols-[280px_1fr_320px]">
-      <div className="rounded-xl border border-border bg-card">
-        <div className="border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Incoming queue
-        </div>
-        <div className="divide-y divide-border">
-          {queue.map((q) => {
-            const c = caseFiles[q.scenarioId]
-            const active = q.scenarioId === selected
-            return (
-              <button
-                key={q.scenarioId}
-                onClick={() => setSelected(q.scenarioId)}
-                className={cn(
-                  "w-full px-4 py-3 text-left transition-colors",
-                  active ? "bg-teal-50 dark:bg-teal-950/30" : "hover:bg-muted/50",
-                )}
+    <div className="flex min-h-svh flex-col bg-background lg:h-svh lg:overflow-hidden">
+      <WorkspaceHeader active={item.systems} />
+
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
+        <aside className="flex min-h-0 flex-col border-b border-border bg-card lg:border-r lg:border-b-0">
+          <div className="p-3">
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1 text-[11px] font-semibold tracking-wide uppercase">
+              <TabButton active={tab === "ai"} onClick={() => setTab("ai")}>
+                <Sparkles className="size-3" /> AI Queue
+                <Count>{cases.length - accepted.size}</Count>
+              </TabButton>
+              <TabButton
+                active={tab === "handoff"}
+                onClick={() => setTab("handoff")}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{c.customer}</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase",
-                      q.priority === "High"
-                        ? "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-300"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-                    )}
-                  >
-                    {q.priority}
-                  </span>
-                </div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{c.id}</div>
-                <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>{q.channel}</span>
-                  <span>waiting {q.waiting}</span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border bg-card p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold text-foreground">{item.customer}</div>
-            <div className="text-xs text-muted-foreground">{item.authNote}</div>
+                Handoff
+                <Count>{accepted.size}</Count>
+              </TabButton>
+            </div>
           </div>
-          <span className="rounded-full bg-teal-100 px-2 py-1 text-[10px] font-semibold text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-            Handed off from Ava
-          </span>
-        </div>
 
-        <Section title="Intent">
-          <p className="text-sm text-foreground">{item.intent}</p>
-        </Section>
-
-        <Section title="Customer-confirmed facts">
-          <ul className="space-y-1.5">
-            {item.facts.map((f, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                <Check className="mt-0.5 size-3.5 shrink-0 text-teal-600" strokeWidth={3} />
-                {f}
-              </li>
+          <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
+            {listed.length === 0 && (
+              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+                {tab === "handoff"
+                  ? "Accept a handoff to see it here."
+                  : "No conversations waiting."}
+              </p>
+            )}
+            {listed.map((c) => (
+              <QueueRow
+                key={c.scenarioId}
+                item={c}
+                active={c.scenarioId === selectedId}
+                onClick={() => setSelectedId(c.scenarioId)}
+              />
             ))}
-          </ul>
-        </Section>
-
-        <Section title="Actions already completed">
-          <ul className="space-y-1.5">
-            {item.actionsCompleted.map((f, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                <Check className="mt-0.5 size-3.5 shrink-0 text-teal-600" strokeWidth={3} />
-                {f}
-              </li>
-            ))}
-          </ul>
-        </Section>
-
-        <Section title="Reason for escalation">
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-            {item.reason}
-          </p>
-        </Section>
-
-        <div className="mt-2 rounded-lg border border-dashed border-border px-3 py-2 text-center text-[11px] text-muted-foreground">
-          Do not ask the customer to repeat the information above.
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            AI recommendation
           </div>
-          <ul className="space-y-2">
-            {item.recommendation.map((r, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-foreground">
-                <ArrowRight className="mt-0.5 size-3 shrink-0 text-teal-600" />
-                {r}
-              </li>
-            ))}
-          </ul>
-        </div>
 
-        <div className="flex-1 rounded-xl border border-border bg-card p-4">
-          <div className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            AI conversation transcript
+          <div className="grid grid-cols-3 border-t border-border py-3 text-center">
+            <Stat
+              value={cases.length - accepted.size}
+              label="Waiting"
+              className="text-orange-500"
+            />
+            <Stat
+              value={cases.length}
+              label="AI Active"
+              className="text-teal-600 dark:text-teal-400"
+            />
+            <Stat
+              value={accepted.size}
+              label="Handoff"
+              className="text-rose-500"
+            />
           </div>
-          <div className="max-h-[420px] space-y-2.5 overflow-y-auto pr-1">
-            {transcript.map((t, i) =>
-              t.kind === "message" ? (
-                <div key={i} className="text-xs">
-                  <span className="font-medium text-foreground">{t.speaker}: </span>
-                  <span className="text-muted-foreground">{t.text}</span>
-                </div>
-              ) : t.kind === "reply" ? (
-                <div key={i} className="text-xs">
-                  <span className="font-medium text-foreground">{item.customer.split(" ")[0]}: </span>
-                  <span className="text-muted-foreground">{t.text}</span>
-                </div>
-              ) : t.kind === "checklist" ? (
-                <div key={i} className="text-xs">
-                  <span className="font-medium text-foreground">{t.speaker}: </span>
-                  <span className="text-muted-foreground">
-                    {[t.intro, t.items.join(" · "), t.outro].filter(Boolean).join(" — ")}
-                  </span>
-                </div>
-              ) : null,
+        </aside>
+
+        <main className="flex min-h-[520px] min-w-0 flex-col lg:min-h-0">
+          <TicketHeader item={item} accepted={isAccepted} />
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
+            <div className="mx-auto max-w-xl rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-center font-mono text-[11px] text-teal-800 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-300">
+              Session started · {item.channel} · CRM context loaded · Ava AI
+              assigned
+            </div>
+
+            {before.map((turn, i) => (
+              <TranscriptTurn
+                key={turn.id}
+                turn={turn}
+                time={clock(i)}
+                customer={item.customer}
+              />
+            ))}
+
+            <HandoffCard
+              note={item.handoffNote}
+              accepted={isAccepted}
+              onAccept={accept}
+            />
+
+            {isAccepted &&
+              after.map((turn, i) => (
+                <TranscriptTurn
+                  key={turn.id}
+                  turn={turn}
+                  time={clock(before.length + 2 + i)}
+                  customer={item.customer}
+                />
+              ))}
+          </div>
+
+          <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-3">
+            <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
+              {isAccepted ? "Type a message" : "Accept the handoff to reply"}
+            </div>
+            <button
+              disabled
+              aria-label="Send"
+              className="flex size-10 items-center justify-center rounded-xl bg-teal-700 text-white opacity-60"
+            >
+              <ArrowUp className="size-4" />
+            </button>
+          </div>
+        </main>
+
+        <aside className="flex min-h-0 flex-col border-t border-border bg-card lg:border-t-0 lg:border-l">
+          <div className="grid grid-cols-2 border-b border-border text-[11px] font-semibold tracking-wide uppercase">
+            <PanelTab
+              active={panel === "summary"}
+              onClick={() => setPanel("summary")}
+            >
+              <Sparkles className="size-3" /> AI Summary
+            </PanelTab>
+            <PanelTab
+              active={panel === "profile"}
+              onClick={() => setPanel("profile")}
+            >
+              <User className="size-3" /> Profile
+            </PanelTab>
+          </div>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+            {panel === "summary" ? (
+              <SummaryPanel item={item} accepted={isAccepted} />
+            ) : (
+              <ProfilePanel item={item} />
             )}
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function WorkspaceHeader({ active }: { active: CaseSystem[] }) {
   return (
-    <div className="mb-4">
-      <div className="mb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</div>
+    <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-teal-900/40 bg-linear-to-r from-[#04222b] to-[#062f3a] px-4 py-3 text-white">
+      <div className="flex items-center gap-3">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-teal-500 text-sm font-bold text-white">
+          O
+        </div>
+        <div className="leading-tight">
+          <div className="text-sm font-semibold">oneix</div>
+          <div className="text-[10px] font-medium tracking-[0.18em] text-teal-300/80 uppercase">
+            AI Agent Workspace
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden items-center gap-2 md:flex">
+        {SYSTEMS.map((system) => {
+          const on = active.includes(system)
+          return (
+            <span
+              key={system}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors",
+                on
+                  ? "border-teal-400/30 bg-teal-400/10 text-white"
+                  : "border-white/10 text-white/40"
+              )}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  on ? "bg-teal-400" : "bg-white/25"
+                )}
+              />
+              {system}
+            </span>
+          )
+        })}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-full bg-orange-400 text-sm font-bold text-[#04222b]">
+            {AGENT_NAME[0]}
+          </div>
+          <div className="leading-tight">
+            <div className="text-sm font-semibold">{AGENT_NAME}</div>
+            <div className="text-[10px] font-medium tracking-[0.18em] text-orange-300 uppercase">
+              Agent
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors",
+        active
+          ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
+          : "text-muted-foreground hover:text-foreground"
+      )}
+    >
       {children}
+    </button>
+  )
+}
+
+function PanelTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center justify-center gap-1.5 border-b-2 py-3 transition-colors",
+        active
+          ? "border-teal-600 text-teal-700 dark:text-teal-300"
+          : "border-transparent text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Count({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full bg-teal-100 px-1.5 py-px text-[10px] text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+      {children}
+    </span>
+  )
+}
+
+function Stat({
+  value,
+  label,
+  className,
+}: {
+  value: number
+  label: string
+  className: string
+}) {
+  return (
+    <div>
+      <div className={cn("text-2xl font-bold", className)}>{value}</div>
+      <div className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+        {label}
+      </div>
+    </div>
+  )
+}
+
+function PriorityBadge({ priority }: { priority: CaseFile["priority"] }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase",
+        priority === "High"
+          ? "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+          : "border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
+      )}
+    >
+      {priority}
+    </span>
+  )
+}
+
+function QueueRow({
+  item,
+  active,
+  onClick,
+}: {
+  item: CaseFile
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "block w-full border-l-2 px-4 py-3.5 text-left transition-colors",
+        active
+          ? "border-teal-500 bg-teal-50 dark:bg-teal-950/30"
+          : "border-transparent hover:bg-muted/50"
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "size-2 rounded-full",
+            item.priority === "High" ? "bg-rose-500" : "bg-amber-500"
+          )}
+        />
+        <span className="flex-1 truncate text-sm font-semibold text-foreground">
+          {item.customer}
+        </span>
+        <span className="text-[11px] text-muted-foreground">
+          {item.waiting}
+        </span>
+      </div>
+      <p className="mt-1 truncate text-xs text-muted-foreground">
+        {item.subject}
+      </p>
+      <div className="mt-2">
+        <PriorityBadge priority={item.priority} />
+      </div>
+    </button>
+  )
+}
+
+function TicketHeader({
+  item,
+  accepted,
+}: {
+  item: CaseFile
+  accepted: boolean
+}) {
+  return (
+    <div className="border-b border-border bg-card px-4 py-4 sm:px-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={cn(
+            "size-2.5 rounded-full",
+            item.priority === "High" ? "bg-rose-500" : "bg-amber-500"
+          )}
+        />
+        <h2 className="text-lg font-semibold text-foreground">
+          {item.customer}
+        </h2>
+        <span className="rounded-full border border-teal-300 bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300">
+          {item.tier}
+        </span>
+        <span className="flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-600 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+          <TriangleAlert className="size-3" /> {item.issue}
+        </span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          Ticket <span className="font-mono text-foreground">#{item.id}</span>
+        </span>
+        <span>{item.channel}</span>
+        <span>Started 10:41 AM</span>
+        <span
+          className={cn(
+            "font-mono font-semibold",
+            accepted ? "text-emerald-600" : "text-teal-700 dark:text-teal-300"
+          )}
+        >
+          {accepted ? `Owned by ${AGENT_NAME}` : "Awaiting agent"}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function HandoffCard({
+  note,
+  accepted,
+  onAccept,
+}: {
+  note: string
+  accepted: boolean
+  onAccept: () => void
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-4 rounded-2xl border px-4 py-3.5",
+        accepted
+          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30"
+          : "border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30"
+      )}
+    >
+      <div
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-xl",
+          accepted
+            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950"
+            : "bg-rose-100 text-rose-500 dark:bg-rose-950"
+        )}
+      >
+        {accepted ? (
+          <Check className="size-5" strokeWidth={3} />
+        ) : (
+          <RefreshCw className="size-5" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1 basis-56">
+        <div className="text-sm font-semibold text-foreground">
+          {accepted ? `Handoff accepted by ${AGENT_NAME}` : "AI Handoff"}
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">{note}</p>
+      </div>
+      {!accepted && (
+        <button
+          onClick={onAccept}
+          className="rounded-lg bg-rose-600 px-5 py-2 text-xs font-bold tracking-wider text-white uppercase transition-colors hover:bg-rose-700"
+        >
+          Accept
+        </button>
+      )}
+    </div>
+  )
+}
+
+function SummaryPanel({
+  item,
+  accepted,
+}: {
+  item: CaseFile
+  accepted: boolean
+}) {
+  const steps = accepted
+    ? [...item.steps, `Handoff accepted by ${AGENT_NAME}`]
+    : item.steps
+
+  return (
+    <>
+      <section className="rounded-2xl border border-teal-200 bg-teal-50/60 p-4 dark:border-teal-900/60 dark:bg-teal-950/20">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-teal-700 uppercase dark:text-teal-300">
+            <Sparkles className="size-3.5" /> AI Summary
+          </h3>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {clock(item.steps.length)} AM
+          </span>
+        </div>
+        <p className="text-[13px] leading-relaxed text-foreground">
+          {item.summary.map((part, i) => (
+            <SummaryText key={i} part={part} />
+          ))}
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-muted/40 p-4">
+        <h3 className="mb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+          AI Actions Taken
+        </h3>
+        <ul className="space-y-2.5">
+          {steps.map((step, i) => (
+            <li
+              key={step}
+              className="flex items-start justify-between gap-3 text-[13px] text-foreground"
+            >
+              <span>{step}</span>
+              <span className="shrink-0 pt-0.5 font-mono text-[10px] text-muted-foreground">
+                {clock(i)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+        <h3 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-amber-700 uppercase dark:text-amber-300">
+          <Sparkles className="size-3.5" /> AI Agent Recommendations
+        </h3>
+        <ol className="space-y-2">
+          {item.recommendation.map((rec, i) => (
+            <li key={rec} className="flex gap-2 text-[13px] text-foreground">
+              <span className="font-semibold text-amber-600 dark:text-amber-300">
+                {i + 1}.
+              </span>
+              {rec}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </>
+  )
+}
+
+function SummaryText({ part }: { part: SummaryPart }) {
+  if (typeof part === "string") return <>{part}</>
+  return (
+    <strong
+      className={cn(
+        "font-semibold",
+        part.tone === "danger"
+          ? "text-rose-600 dark:text-rose-400"
+          : "text-orange-500 dark:text-orange-400"
+      )}
+    >
+      {part.text}
+    </strong>
+  )
+}
+
+function ProfilePanel({ item }: { item: CaseFile }) {
+  return (
+    <section className="rounded-2xl border border-border bg-muted/40 p-4">
+      <h3 className="mb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+        Customer Profile
+      </h3>
+      <dl className="space-y-3">
+        {item.profile.map((row) => (
+          <div key={row.label}>
+            <dt className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+              {row.label}
+            </dt>
+            <dd className="text-[13px] text-foreground">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
+function AiLabel({ time }: { time: string }) {
+  return (
+    <div className="mb-1 flex items-center gap-1.5 text-xs">
+      <Sparkles className="size-3 text-teal-600 dark:text-teal-400" />
+      <span className="font-semibold text-teal-700 dark:text-teal-300">
+        Ava AI
+      </span>
+      <span className="font-mono text-[10px] text-muted-foreground">
+        {time} AM
+      </span>
+    </div>
+  )
+}
+
+function TranscriptTurn({
+  turn,
+  time,
+  customer,
+}: {
+  turn: ChatTurn
+  time: string
+  customer: string
+}) {
+  switch (turn.kind) {
+    case "message": {
+      const live = turn.from === "agent"
+      return (
+        <div className="max-w-[85%]">
+          {live ? (
+            <div className="mb-1 flex items-center gap-1.5 text-xs">
+              <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                {turn.speaker}
+              </span>
+              <span className="text-muted-foreground">Live Agent</span>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {time} AM
+              </span>
+            </div>
+          ) : (
+            <AiLabel time={time} />
+          )}
+          <div
+            className={cn(
+              "rounded-2xl rounded-tl-md border px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground",
+              live
+                ? "border-indigo-200 bg-indigo-50 dark:border-indigo-900/60 dark:bg-indigo-950/30"
+                : "border-teal-200 bg-teal-50 dark:border-teal-900/60 dark:bg-teal-950/30"
+            )}
+          >
+            {turn.text}
+          </div>
+        </div>
+      )
+    }
+    case "checklist":
+      return (
+        <div className="max-w-[85%]">
+          <AiLabel time={time} />
+          <div className="space-y-2 rounded-2xl rounded-tl-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-foreground dark:border-teal-900/60 dark:bg-teal-950/30">
+            {turn.intro && <p className="whitespace-pre-line">{turn.intro}</p>}
+            <ul className="space-y-1">
+              {turn.items.map((it) => (
+                <li key={it} className="flex items-start gap-1.5">
+                  <Check
+                    className="mt-0.5 size-3.5 shrink-0 text-teal-600"
+                    strokeWidth={3}
+                  />{" "}
+                  {it}
+                </li>
+              ))}
+              {turn.pending?.map((it) => (
+                <li
+                  key={it}
+                  className="flex items-start gap-1.5 text-muted-foreground"
+                >
+                  <Circle className="mt-0.5 size-3.5 shrink-0 opacity-50" />{" "}
+                  {it}
+                </li>
+              ))}
+            </ul>
+            {turn.outro && <p>{turn.outro}</p>}
+          </div>
+        </div>
+      )
+    case "reply":
+      return (
+        <div className="flex flex-col items-end">
+          <div className="mb-1 flex items-center gap-1.5 text-xs">
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {time} AM
+            </span>
+            <span className="font-semibold text-foreground">
+              {customer.split(" ")[0]}
+            </span>
+          </div>
+          <div className="flex items-end gap-2">
+            <div className="max-w-[26rem] rounded-2xl rounded-br-md bg-[#0a3a4a] px-4 py-3 text-sm leading-relaxed text-white">
+              {turn.text}
+            </div>
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0a3a4a] text-[10px] font-bold text-white">
+              {customer
+                .split(" ")
+                .map((w) => w[0])
+                .slice(-2)
+                .join("")}
+            </div>
+          </div>
+        </div>
+      )
+    case "system":
+    case "faceid":
+      return (
+        <div className="flex items-center justify-center gap-1.5 text-center font-mono text-[11px] text-muted-foreground">
+          {turn.kind === "faceid" && (
+            <ShieldCheck className="size-3.5 text-teal-600" />
+          )}
+          {turn.text}
+        </div>
+      )
+    case "alert":
+      return (
+        <div className="mx-auto max-w-sm rounded-xl border border-border bg-card px-4 py-2.5 text-center">
+          <div className="text-[10px] font-bold tracking-wider text-rose-600 uppercase dark:text-rose-400">
+            {turn.title}
+          </div>
+          {turn.lines.map((l) => (
+            <div key={l} className="text-xs text-muted-foreground">
+              {l}
+            </div>
+          ))}
+        </div>
+      )
+    case "status":
+    case "payment":
+    case "options":
+    case "transactions":
+      return <InfoCard turn={turn} />
+    default:
+      return null
+  }
+}
+
+/** Structured cards from the conversation, shown compactly for the agent. */
+function InfoCard({
+  turn,
+}: {
+  turn: Extract<
+    ChatTurn,
+    { kind: "status" | "payment" | "options" | "transactions" }
+  >
+}) {
+  return (
+    <div className="max-w-[85%] rounded-xl border border-border bg-card px-4 py-3 text-xs">
+      {turn.kind === "status" && (
+        <>
+          <div className="mb-2 font-semibold text-foreground">{turn.title}</div>
+          {turn.rows.map((r) => (
+            <div key={r.label} className="flex justify-between gap-4 py-0.5">
+              <span className="text-muted-foreground">{r.label}</span>
+              <span
+                className={cn(
+                  "font-medium",
+                  r.positive ? "text-emerald-600" : "text-foreground"
+                )}
+              >
+                {r.value}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
+      {turn.kind === "payment" && (
+        <>
+          <div className="mb-2 font-semibold text-foreground">{turn.title}</div>
+          {turn.rows.map((r) => (
+            <div key={r.label} className="flex justify-between py-0.5">
+              <span className="text-muted-foreground">{r.label}</span>
+              <span className="font-medium text-foreground">{r.amount}</span>
+            </div>
+          ))}
+          <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold text-foreground">
+            <span>Total</span>
+            <span>{turn.total}</span>
+          </div>
+        </>
+      )}
+      {turn.kind === "options" && (
+        <>
+          {turn.intro && (
+            <div className="mb-2 text-foreground">{turn.intro}</div>
+          )}
+          {turn.options.map((o) => (
+            <div key={o.id} className="py-1">
+              <div className="font-semibold text-foreground">{o.heading}</div>
+              <div className="text-muted-foreground">{o.lines.join(" · ")}</div>
+            </div>
+          ))}
+        </>
+      )}
+      {turn.kind === "transactions" &&
+        turn.items.map((t) => (
+          <div key={t.id} className="flex justify-between gap-4 py-0.5">
+            <span className="text-foreground">
+              {t.label}{" "}
+              <span className="text-muted-foreground">· {t.time}</span>
+            </span>
+            <span className="font-medium text-foreground">{t.amount}</span>
+          </div>
+        ))}
     </div>
   )
 }
