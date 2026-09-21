@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { scriptsByScenario } from "@/lib/oneix/scripts"
 import { caseFiles } from "@/lib/oneix/cases"
+import { industries } from "@/lib/oneix/industries"
+import { useLiveSession } from "@/hooks/use-live-session"
 import type {
   CaseFile,
   CaseSystem,
@@ -30,6 +32,9 @@ const SYSTEMS: CaseSystem[] = [
 ]
 const AGENT_NAME = "Jordan"
 
+/** A customer demo counts as live if the relay heard from it this recently. */
+const LIVE_WINDOW_MS = 10 * 60 * 1000
+
 /** Demo clock: the session starts at 10:41 AM and each step/message adds a minute. */
 function clock(offset: number) {
   const total = 10 * 60 + 41 + offset
@@ -40,22 +45,81 @@ function clock(offset: number) {
 
 export function AgentWorkspace() {
   const cases = Object.values(caseFiles)
+  const relay = useLiveSession()
   const [selectedId, setSelectedId] = useState(cases[0].scenarioId)
   const [accepted, setAccepted] = useState<Set<string>>(new Set())
   const [tab, setTab] = useState<"ai" | "handoff">("ai")
   const [panel, setPanel] = useState<"summary" | "profile">("summary")
+  const [seenSession, setSeenSession] = useState<string | null>(null)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  const liveSession =
+    relay.session?.status === "active" &&
+    relay.ageMs !== null &&
+    relay.ageMs < LIVE_WINDOW_MS
+      ? relay.session
+      : null
+  const liveCaseId =
+    liveSession && caseFiles[liveSession.scenarioId]
+      ? liveSession.scenarioId
+      : null
+  const liveOnlyTitle =
+    liveSession && !liveCaseId
+      ? industries
+          .flatMap((i) => i.scenarios)
+          .find((sc) => sc.id === liveSession.scenarioId)?.title
+      : undefined
+
+  // A new customer demo just started: jump to its ticket, fresh and unaccepted.
+  if (liveSession && liveSession.sessionId !== seenSession) {
+    setSeenSession(liveSession.sessionId)
+    if (liveCaseId) {
+      setSelectedId(liveCaseId)
+      setTab("ai")
+      setAccepted((prev) => {
+        const next = new Set(prev)
+        next.delete(liveCaseId)
+        return next
+      })
+    }
+  }
 
   const item = caseFiles[selectedId]
   const isAccepted = accepted.has(selectedId)
+  const isLive = selectedId === liveCaseId
 
   const script = scriptsByScenario[selectedId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
-  const before = script.slice(0, handoffAt)
-  const after = script.slice(handoffAt + 1)
+  const revealed = isLive ? liveSession!.revealed : script.length
+  const handoffReached = !isLive || revealed > handoffAt
+  const before = script.slice(0, Math.min(revealed, handoffAt))
+  const showAfter = isLive ? handoffReached : isAccepted
+  const after = script.slice(handoffAt + 1, isLive ? revealed : undefined)
+  const nextTurn = isLive && liveSession!.typing ? script[revealed] : undefined
+  const stepsShown = handoffReached
+    ? item.steps.length
+    : Math.floor(
+        (item.steps.length * Math.min(revealed, handoffAt)) / handoffAt
+      )
 
-  const listed = cases.filter(
-    (c) => accepted.has(c.scenarioId) === (tab === "handoff")
-  )
+  const statusLabel = isAccepted
+    ? `Owned by ${AGENT_NAME}`
+    : isLive && !handoffReached
+      ? "Live · Ava is handling"
+      : "Awaiting agent"
+
+  const listed = cases
+    .filter((c) => accepted.has(c.scenarioId) === (tab === "handoff"))
+    .sort(
+      (a, b) =>
+        Number(b.scenarioId === liveCaseId) -
+        Number(a.scenarioId === liveCaseId)
+    )
+
+  useEffect(() => {
+    if (isLive)
+      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [isLive, revealed, liveSession?.typing, selectedId, isAccepted])
 
   function accept() {
     setAccepted((prev) => new Set(prev).add(selectedId))
@@ -64,7 +128,7 @@ export function AgentWorkspace() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background lg:h-svh lg:overflow-hidden">
-      <WorkspaceHeader active={item.systems} />
+      <WorkspaceHeader active={item.systems} relay={relay} />
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
         <aside className="flex min-h-0 flex-col border-b border-border bg-card lg:border-r lg:border-b-0">
@@ -92,11 +156,23 @@ export function AgentWorkspace() {
                   : "No conversations waiting."}
               </p>
             )}
+            {liveOnlyTitle && tab === "ai" && (
+              <div className="border-l-2 border-teal-500 bg-teal-50 px-4 py-3.5 dark:bg-teal-950/30">
+                <LivePill />
+                <p className="mt-1.5 text-sm font-semibold text-foreground">
+                  {liveOnlyTitle}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Ava is resolving this end to end — no handoff needed.
+                </p>
+              </div>
+            )}
             {listed.map((c) => (
               <QueueRow
                 key={c.scenarioId}
                 item={c}
                 active={c.scenarioId === selectedId}
+                live={c.scenarioId === liveCaseId}
                 onClick={() => setSelectedId(c.scenarioId)}
               />
             ))}
@@ -122,7 +198,12 @@ export function AgentWorkspace() {
         </aside>
 
         <main className="flex min-h-[520px] min-w-0 flex-col lg:min-h-0">
-          <TicketHeader item={item} accepted={isAccepted} />
+          <TicketHeader
+            item={item}
+            accepted={isAccepted}
+            statusLabel={statusLabel}
+            live={isLive}
+          />
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
             <div className="mx-auto max-w-xl rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-center font-mono text-[11px] text-teal-800 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-300">
@@ -139,13 +220,15 @@ export function AgentWorkspace() {
               />
             ))}
 
-            <HandoffCard
-              note={item.handoffNote}
-              accepted={isAccepted}
-              onAccept={accept}
-            />
+            {handoffReached && (
+              <HandoffCard
+                note={item.handoffNote}
+                accepted={isAccepted}
+                onAccept={accept}
+              />
+            )}
 
-            {isAccepted &&
+            {showAfter &&
               after.map((turn, i) => (
                 <TranscriptTurn
                   key={turn.id}
@@ -154,6 +237,9 @@ export function AgentWorkspace() {
                   customer={item.customer}
                 />
               ))}
+
+            {nextTurn && <TypingRow turn={nextTurn} />}
+            <div ref={endRef} />
           </div>
 
           <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-3">
@@ -188,7 +274,13 @@ export function AgentWorkspace() {
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
             {panel === "summary" ? (
-              <SummaryPanel item={item} accepted={isAccepted} />
+              <SummaryPanel
+                item={item}
+                accepted={isAccepted}
+                stepsShown={stepsShown}
+                summaryReady={handoffReached}
+                time={clock(handoffAt + 1)}
+              />
             ) : (
               <ProfilePanel item={item} />
             )}
@@ -199,7 +291,13 @@ export function AgentWorkspace() {
   )
 }
 
-function WorkspaceHeader({ active }: { active: CaseSystem[] }) {
+function WorkspaceHeader({
+  active,
+  relay,
+}: {
+  active: CaseSystem[]
+  relay: ReturnType<typeof useLiveSession>
+}) {
   return (
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-teal-900/40 bg-linear-to-r from-[#04222b] to-[#062f3a] px-4 py-3 text-white">
       <div className="flex items-center gap-3">
@@ -239,7 +337,8 @@ function WorkspaceHeader({ active }: { active: CaseSystem[] }) {
         })}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <RelayStatus relay={relay} />
         <ThemeToggle />
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-full bg-orange-400 text-sm font-bold text-[#04222b]">
@@ -350,10 +449,12 @@ function PriorityBadge({ priority }: { priority: CaseFile["priority"] }) {
 function QueueRow({
   item,
   active,
+  live,
   onClick,
 }: {
   item: CaseFile
   active: boolean
+  live: boolean
   onClick: () => void
 }) {
   return (
@@ -376,9 +477,13 @@ function QueueRow({
         <span className="flex-1 truncate text-sm font-semibold text-foreground">
           {item.customer}
         </span>
-        <span className="text-[11px] text-muted-foreground">
-          {item.waiting}
-        </span>
+        {live ? (
+          <LivePill />
+        ) : (
+          <span className="text-[11px] text-muted-foreground">
+            {item.waiting}
+          </span>
+        )}
       </div>
       <p className="mt-1 truncate text-xs text-muted-foreground">
         {item.subject}
@@ -393,9 +498,13 @@ function QueueRow({
 function TicketHeader({
   item,
   accepted,
+  statusLabel,
+  live,
 }: {
   item: CaseFile
   accepted: boolean
+  statusLabel: string
+  live: boolean
 }) {
   return (
     <div className="border-b border-border bg-card px-4 py-4 sm:px-6">
@@ -428,8 +537,9 @@ function TicketHeader({
             accepted ? "text-emerald-600" : "text-teal-700 dark:text-teal-300"
           )}
         >
-          {accepted ? `Owned by ${AGENT_NAME}` : "Awaiting agent"}
+          {statusLabel}
         </span>
+        {live && <LivePill />}
       </div>
     </div>
   )
@@ -488,13 +598,18 @@ function HandoffCard({
 function SummaryPanel({
   item,
   accepted,
+  stepsShown,
+  summaryReady,
+  time,
 }: {
   item: CaseFile
   accepted: boolean
+  stepsShown: number
+  summaryReady: boolean
+  time: string
 }) {
-  const steps = accepted
-    ? [...item.steps, `Handoff accepted by ${AGENT_NAME}`]
-    : item.steps
+  const done = item.steps.slice(0, stepsShown)
+  const steps = accepted ? [...done, `Handoff accepted by ${AGENT_NAME}`] : done
 
   return (
     <>
@@ -504,20 +619,32 @@ function SummaryPanel({
             <Sparkles className="size-3.5" /> AI Summary
           </h3>
           <span className="font-mono text-[10px] text-muted-foreground">
-            {clock(item.steps.length)} AM
+            {time} AM
           </span>
         </div>
-        <p className="text-[13px] leading-relaxed text-foreground">
-          {item.summary.map((part, i) => (
-            <SummaryText key={i} part={part} />
-          ))}
-        </p>
+        {summaryReady ? (
+          <p className="text-[13px] leading-relaxed text-foreground">
+            {item.summary.map((part, i) => (
+              <SummaryText key={i} part={part} />
+            ))}
+          </p>
+        ) : (
+          <p className="text-[13px] leading-relaxed text-muted-foreground italic">
+            Ava is still handling this conversation. The summary is written at
+            handoff.
+          </p>
+        )}
       </section>
 
       <section className="rounded-2xl border border-border bg-muted/40 p-4">
         <h3 className="mb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
           AI Actions Taken
         </h3>
+        {steps.length === 0 && (
+          <p className="text-[13px] text-muted-foreground italic">
+            Waiting for the first action…
+          </p>
+        )}
         <ul className="space-y-2.5">
           {steps.map((step, i) => (
             <li
@@ -797,6 +924,76 @@ function InfoCard({
             <span className="font-medium text-foreground">{t.amount}</span>
           </div>
         ))}
+    </div>
+  )
+}
+
+function LivePill() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
+      <span className="size-1.5 animate-pulse rounded-full bg-white" />
+      Live
+    </span>
+  )
+}
+
+function TypingRow({ turn }: { turn: ChatTurn }) {
+  const isText = turn.kind === "message" || turn.kind === "checklist"
+  if (!isText) {
+    return (
+      <div className="text-center font-mono text-[11px] text-muted-foreground">
+        Processing…
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span
+        className={cn(
+          "font-semibold",
+          turn.from === "agent"
+            ? "text-indigo-700 dark:text-indigo-300"
+            : "text-teal-700 dark:text-teal-300"
+        )}
+      >
+        {turn.speaker}
+      </span>
+      is typing
+      <span className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50"
+            style={{ animationDelay: `${i * 120}ms` }}
+          />
+        ))}
+      </span>
+    </div>
+  )
+}
+
+/** Header indicator so booth staff can tell at a glance whether sync is working. */
+function RelayStatus({ relay }: { relay: ReturnType<typeof useLiveSession> }) {
+  const unconfigured =
+    relay.store === "memory" && process.env.NODE_ENV === "production"
+  const label = !relay.online
+    ? "Sync offline"
+    : unconfigured
+      ? "Sync not configured"
+      : "Live sync"
+  const tone = !relay.online || unconfigured ? "bg-amber-400" : "bg-emerald-400"
+  return (
+    <div
+      className="hidden items-center gap-1.5 text-[11px] text-white/70 sm:flex"
+      title={
+        unconfigured
+          ? "Add an Upstash Redis integration on Vercel so separate devices can sync."
+          : undefined
+      }
+    >
+      <span className={cn("size-1.5 rounded-full", tone)} />
+      {label}
+      <span className="font-mono text-white/40">· {relay.room}</span>
     </div>
   )
 }
