@@ -36,6 +36,18 @@ const queue = [
     channel: "Chat handoff",
     waiting: "0m 06s",
   },
+  {
+    scenarioId: "appointment",
+    priority: "High",
+    channel: "Chat handoff",
+    waiting: "0m 09s",
+  },
+  {
+    scenarioId: "pre-visit",
+    priority: "Standard",
+    channel: "Chat handoff",
+    waiting: "0m 11s",
+  },
 ]
 
 export function AgentWorkspace() {
