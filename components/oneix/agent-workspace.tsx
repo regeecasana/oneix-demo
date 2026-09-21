@@ -143,6 +143,10 @@ export function AgentWorkspace() {
         ? pinnedIndex
         : steps.length - 1
   const activeSystem = activeIndex === null ? null : steps[activeIndex].system
+  // Steps the AI has reached so far. A technology counts as "used" once one of
+  // these relies on it, so the header and the Orchestration panel always agree.
+  const reachedSteps =
+    activeIndex === null ? [] : steps.slice(0, activeIndex + 1)
 
   const listed = cases
     .filter((c) => accepted.has(c.scenarioId) === (tab === "handoff"))
@@ -164,7 +168,11 @@ export function AgentWorkspace() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background lg:h-svh lg:overflow-hidden">
-      <WorkspaceHeader active={activeSystem} relay={relay} />
+      <WorkspaceHeader
+        active={activeSystem}
+        used={reachedSteps.map((st) => st.system)}
+        relay={relay}
+      />
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
         <aside className="flex min-h-0 flex-col border-b border-border bg-card lg:border-r lg:border-b-0">
@@ -326,7 +334,8 @@ export function AgentWorkspace() {
               />
             ) : (
               <OrchestrationPanel
-                steps={steps}
+                steps={reachedSteps}
+                later={steps.slice(reachedSteps.length)}
                 activeSystem={activeSystem}
                 aiDone={aiDone}
               />
@@ -340,9 +349,11 @@ export function AgentWorkspace() {
 
 function WorkspaceHeader({
   active,
+  used,
   relay,
 }: {
   active: CaseSystem | null
+  used: CaseSystem[]
   relay: ReturnType<typeof useLiveSession>
 }) {
   return (
@@ -362,6 +373,7 @@ function WorkspaceHeader({
       <div className="hidden items-center gap-2 md:flex">
         {SYSTEMS.map((system) => {
           const on = active === system
+          const done = !on && used.includes(system)
           return (
             <span
               key={system}
@@ -369,15 +381,21 @@ function WorkspaceHeader({
                 "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all duration-300",
                 on
                   ? "border-teal-400/50 bg-teal-400/15 text-white shadow-[0_0_14px_rgba(45,212,191,0.35)]"
-                  : "border-white/10 text-white/40"
+                  : done
+                    ? "border-teal-400/25 text-white/70"
+                    : "border-white/10 text-white/40"
               )}
             >
-              <span
-                className={cn(
-                  "size-1.5 rounded-full transition-colors duration-300",
-                  on ? "animate-pulse bg-teal-400" : "bg-white/25"
-                )}
-              />
+              {done ? (
+                <Check className="size-3 text-teal-400" strokeWidth={3} />
+              ) : (
+                <span
+                  className={cn(
+                    "size-1.5 rounded-full transition-colors duration-300",
+                    on ? "animate-pulse bg-teal-400" : "bg-white/25"
+                  )}
+                />
+              )}
               {system}
             </span>
           )
@@ -871,10 +889,13 @@ const SYSTEM_INFO: Record<
  */
 function OrchestrationPanel({
   steps,
+  later,
   activeSystem,
   aiDone,
 }: {
   steps: CaseStep[]
+  /** Steps the AI hasn't reached yet (when looking back at a finished ticket). */
+  later: CaseStep[]
   activeSystem: CaseSystem | null
   aiDone: boolean
 }) {
@@ -969,7 +990,9 @@ function OrchestrationPanel({
                   </ul>
                 ) : (
                   <p className="mt-2 text-xs text-muted-foreground italic">
-                    {aiDone ? "Not needed for this interaction" : "Waiting…"}
+                    {aiDone && !later.some((l) => l.system === system)
+                      ? "Not needed for this interaction"
+                      : "Waiting…"}
                   </p>
                 )}
               </div>
