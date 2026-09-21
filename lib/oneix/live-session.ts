@@ -24,6 +24,15 @@ export interface LiveSession {
   ts: number
 }
 
+/**
+ * The customer demo re-sends its state every HEARTBEAT_MS while it is open, and
+ * the agent side only treats it as live while the last ping is within
+ * LIVE_WINDOW_MS. That way a closed tab, a lost connection or a device that was
+ * simply walked away from stops showing as "live" within seconds.
+ */
+export const HEARTBEAT_MS = 5000
+export const LIVE_WINDOW_MS = 20000
+
 /** Both screens pair up through a room name. Booths can run in parallel with ?room=. */
 export const DEFAULT_ROOM = "booth"
 export const ROOM_PATTERN = /^[a-z0-9_-]{1,32}$/i

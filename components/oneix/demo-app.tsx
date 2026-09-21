@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { TopNav } from "./top-nav"
 import { Hero } from "./hero"
 import { IndustryGrid } from "./industry-grid"
@@ -9,6 +9,7 @@ import { WhatsAppChat } from "./whatsapp-chat"
 import { NotificationToast } from "./notification-toast"
 import { scriptsByScenario } from "@/lib/oneix/scripts"
 import { newSessionId, publishSession } from "@/hooks/use-session-publisher"
+import { HEARTBEAT_MS } from "@/lib/oneix/live-session"
 import type { IndustryId, ScenarioSummary } from "@/lib/oneix/types"
 
 export function DemoApp() {
@@ -19,6 +20,23 @@ export function DemoApp() {
   // Outbound journeys begin with a notification, before any chat exists; tell
   // the Agent Workspace about it so it can show the journey from the start.
   const notification = useRef<{ id: string; scenarioId: string } | null>(null)
+
+  // Keep the notification stage "live" for the agent while it's on screen.
+  useEffect(() => {
+    if (!toastOpen) return
+    const timer = setInterval(() => {
+      const n = notification.current
+      if (n) {
+        publishSession(
+          "active",
+          n.id,
+          { scenarioId: n.scenarioId, revealed: 0, typing: false },
+          "notified"
+        )
+      }
+    }, HEARTBEAT_MS)
+    return () => clearInterval(timer)
+  }, [toastOpen])
 
   function announceNotification(scenarioId: string) {
     const id = newSessionId()

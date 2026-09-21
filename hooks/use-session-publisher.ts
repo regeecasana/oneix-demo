@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import {
+  HEARTBEAT_MS,
   currentRoom,
   type LiveSession,
   type LiveStage,
@@ -51,15 +52,30 @@ export function publishSession(
 export function useSessionPublisher(
   scenarioId: string,
   revealed: number,
-  typing: boolean
+  typing: boolean,
+  finished: boolean
 ) {
   const [sessionId] = useState(newSessionId)
   const latest = useRef({ scenarioId, revealed, typing })
   latest.current = { scenarioId, revealed, typing }
 
+  // A finished conversation is no longer "live", even if the chat stays open.
   useEffect(() => {
-    publishSession("active", sessionId, { scenarioId, revealed, typing })
-  }, [scenarioId, revealed, typing, sessionId])
+    publishSession(finished ? "ended" : "active", sessionId, {
+      scenarioId,
+      revealed,
+      typing,
+    })
+  }, [scenarioId, revealed, typing, finished, sessionId])
+
+  useEffect(() => {
+    if (finished) return
+    const timer = setInterval(
+      () => publishSession("active", sessionId, latest.current),
+      HEARTBEAT_MS
+    )
+    return () => clearInterval(timer)
+  }, [finished, sessionId])
 
   useEffect(() => {
     return () => publishSession("ended", sessionId, latest.current)

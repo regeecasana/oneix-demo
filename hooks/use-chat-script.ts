@@ -44,7 +44,12 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const [verdicts, setVerdicts] = useState<Record<string, TxnVerdict>>({})
 
   // Mirror progress to the Agent Workspace (/agent), which may be on another device.
-  useSessionPublisher(scenarioId, rendered.length, typing)
+  useSessionPublisher(
+    scenarioId,
+    rendered.length,
+    typing,
+    rendered.length > 0 && rendered.length >= script.length
+  )
 
   const pending = index < script.length ? script[index] : null
   const awaitingReply = pending?.kind === "reply"
