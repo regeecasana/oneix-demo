@@ -70,6 +70,40 @@ export const audioMap: AudioMap = {
     "collections-agent-6": { src: "/audio/bfsi/collection/jordan/6.mp3" },
     "collections-agent-7": { src: "/audio/bfsi/collection/jordan/7.mp3" },
   },
+  admissions: {
+    "admissions-ai-1": { src: "/audio/education/admission/ava/1.mp3" },
+    "admissions-ai-2": { src: "/audio/education/admission/ava/2.mp3" },
+    "admissions-ai-3": { src: "/audio/education/admission/ava/3.mp3" },
+    // Application-progress summary (done / still needed) with its intro and outro.
+    "admissions-checklist-1": { src: "/audio/education/admission/ava/4.mp3" },
+    "admissions-ai-4": { src: "/audio/education/admission/ava/5.mp3" },
+    // "Credential uploaded — verifying issuer signature…" — a backend action.
+    "admissions-system-1": { src: DING },
+    "admissions-ai-5": { src: "/audio/education/admission/ava/6.mp3" },
+    "admissions-ai-6": { src: "/audio/education/admission/ava/7.mp3" },
+    "admissions-ai-7": { src: "/audio/education/admission/ava/8.mp3" },
+    "admissions-checklist-2": { src: "/audio/education/admission/ava/9.mp3" },
+    "admissions-handoff-1": { src: DING },
+    "admissions-agent-1": { src: "/audio/education/admission/jordan/1.mp3" },
+    "admissions-agent-2": { src: "/audio/education/admission/jordan/2.mp3" },
+    "admissions-agent-3": { src: "/audio/education/admission/jordan/3.mp3" },
+    "admissions-agent-4": { src: "/audio/education/admission/jordan/4.mp3" },
+    "admissions-agent-5": { src: "/audio/education/admission/jordan/5.mp3" },
+  },
+  enrolment: {
+    "enrolment-ai-1": { src: "/audio/education/enrollment/ava/1.mp3" },
+    "enrolment-ai-2": { src: "/audio/education/enrollment/ava/2.mp3" },
+    "enrolment-ai-3": { src: "/audio/education/enrollment/ava/3.mp3" },
+    "enrolment-ai-4": { src: "/audio/education/enrollment/ava/4.mp3" },
+    "enrolment-checklist-1": { src: "/audio/education/enrollment/ava/5.mp3" },
+    "enrolment-handoff-1": { src: DING },
+    "enrolment-agent-1": { src: "/audio/education/enrollment/jordan/1.mp3" },
+    "enrolment-agent-2": { src: "/audio/education/enrollment/jordan/2.mp3" },
+    // Ava's two closing bubbles after Jordan's part — recorded into the jordan/
+    // folder (clips 3 and 4), which is why Ava has 5 clips there and Jordan 4.
+    "enrolment-ai-5": { src: "/audio/education/enrollment/jordan/3.mp3" },
+    "enrolment-ai-6": { src: "/audio/education/enrollment/jordan/4.mp3" },
+  },
   disruption: {
     "disruption-ai-1": { src: "/audio/travel/disruption/ava/1.mp3" },
     "disruption-ai-2": { src: "/audio/travel/disruption/ava/2.mp3" },
