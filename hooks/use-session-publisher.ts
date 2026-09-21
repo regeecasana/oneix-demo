@@ -4,39 +4,49 @@ import { useEffect, useRef, useState } from "react"
 import {
   currentRoom,
   type LiveSession,
+  type LiveStage,
   type LiveStatus,
 } from "@/lib/oneix/live-session"
 
-function newSessionId() {
+export function newSessionId() {
   return (
     globalThis.crypto?.randomUUID?.() ??
     `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   )
 }
 
-function post(
+interface Progress {
+  scenarioId: string
+  revealed: number
+  typing: boolean
+}
+
+/** Fire-and-forget: the demo must never depend on the relay being reachable. */
+export function publishSession(
   status: LiveStatus,
-  session: Omit<LiveSession, "status" | "ts" | "sessionId">,
-  sessionId: string
+  sessionId: string,
+  progress: Progress,
+  stage: LiveStage = "chat"
 ) {
-  const payload = {
-    room: currentRoom(),
-    session: { ...session, sessionId, status, ts: Date.now() },
+  const session: LiveSession = {
+    ...progress,
+    sessionId,
+    status,
+    stage,
+    ts: Date.now(),
   }
-  // keepalive lets the "ended" update survive the chat closing / the page unloading.
+  // keepalive lets an "ended" update survive the chat closing / the page unloading.
   fetch("/api/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ room: currentRoom(), session }),
     keepalive: true,
-  }).catch(() => {
-    // Best effort: the demo must never depend on the relay being reachable.
-  })
+  }).catch(() => {})
 }
 
 /**
  * Publishes how far the customer has got so the Agent Workspace can follow
- * along in real time. Fire-and-forget; failures are ignored.
+ * along in real time.
  */
 export function useSessionPublisher(
   scenarioId: string,
@@ -48,10 +58,10 @@ export function useSessionPublisher(
   latest.current = { scenarioId, revealed, typing }
 
   useEffect(() => {
-    post("active", { scenarioId, revealed, typing }, sessionId)
+    publishSession("active", sessionId, { scenarioId, revealed, typing })
   }, [scenarioId, revealed, typing, sessionId])
 
   useEffect(() => {
-    return () => post("ended", latest.current, sessionId)
+    return () => publishSession("ended", sessionId, latest.current)
   }, [sessionId])
 }

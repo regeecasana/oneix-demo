@@ -1,6 +1,12 @@
 export type LiveStatus = "active" | "ended"
 
 /**
+ * Outbound scenarios start with a push notification before any chat exists:
+ * "notified" means it was sent but the customer has not opened the chat yet.
+ */
+export type LiveStage = "notified" | "chat"
+
+/**
  * What the customer demo publishes so the Agent Workspace (possibly on another
  * device) can follow along. It's deliberately just a pointer into the scenario's
  * script: the agent renders the conversation itself from `revealed`.
@@ -13,6 +19,7 @@ export interface LiveSession {
   /** True while the next bubble is being "typed". */
   typing: boolean
   status: LiveStatus
+  stage?: LiveStage
   /** Publisher's clock; only used to order updates from the same session. */
   ts: number
 }

@@ -60,10 +60,26 @@ export type ChatTurnContent =
     }
   | {
       kind: "transactions"
-      items: { id: string; label: string; amount: string; time: string; correctVerdict: TxnVerdict }[]
+      items: {
+        id: string
+        label: string
+        amount: string
+        time: string
+        correctVerdict: TxnVerdict
+      }[]
     }
-  | { kind: "payment"; title: string; source: string; rows: { label: string; amount: string }[]; total: string }
-  | { kind: "status"; title: string; rows: { label: string; value: string; positive?: boolean }[] }
+  | {
+      kind: "payment"
+      title: string
+      source: string
+      rows: { label: string; amount: string }[]
+      total: string
+    }
+  | {
+      kind: "status"
+      title: string
+      rows: { label: string; value: string; positive?: boolean }[]
+    }
 
 /**
  * `id` is stable per turn (assigned by `withTurnIds`, keyed off scenario + speaker
@@ -86,7 +102,8 @@ export interface AudioClip {
 
 export type AudioMap = Record<string, Record<string, AudioClip>>
 
-export type CaseSystem = "Data Warehouse" | "CRM" | "Marketing/CDP" | "AI Orchestrator"
+export type CaseSystem =
+  "Data Warehouse" | "CRM" | "Marketing/CDP" | "AI Orchestrator"
 
 /** A run of summary text, optionally highlighted. */
 export type SummaryPart = string | { text: string; tone: "danger" | "warn" }
@@ -99,6 +116,8 @@ export interface CaseFile {
   /** One-line issue shown under the name in the queue. */
   subject: string
   priority: "High" | "Medium"
+  /** True when the AI finished the whole journey itself, so there is nothing to accept. */
+  resolvedByAi?: boolean
   /** Time already spent waiting for an agent, e.g. "2m". */
   waiting: string
   /** Customer tier / product badge next to the name. */

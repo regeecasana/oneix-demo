@@ -32,6 +32,10 @@ const SYSTEMS: CaseSystem[] = [
 ]
 const AGENT_NAME = "Jordan"
 
+const SCENARIOS = industries.flatMap((i) => i.scenarios)
+const directionOf = (scenarioId: string) =>
+  SCENARIOS.find((sc) => sc.id === scenarioId)?.direction ?? "inbound"
+
 /** A customer demo counts as live if the relay heard from it this recently. */
 const LIVE_WINDOW_MS = 10 * 60 * 1000
 
@@ -63,13 +67,6 @@ export function AgentWorkspace() {
     liveSession && caseFiles[liveSession.scenarioId]
       ? liveSession.scenarioId
       : null
-  const liveOnlyTitle =
-    liveSession && !liveCaseId
-      ? industries
-          .flatMap((i) => i.scenarios)
-          .find((sc) => sc.id === liveSession.scenarioId)?.title
-      : undefined
-
   // A new customer demo just started: jump to its ticket, fresh and unaccepted.
   if (liveSession && liveSession.sessionId !== seenSession) {
     setSeenSession(liveSession.sessionId)
@@ -90,23 +87,38 @@ export function AgentWorkspace() {
 
   const script = scriptsByScenario[selectedId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
+  const hasHandoff = handoffAt >= 0
+  const direction = directionOf(selectedId)
+  const notified = isLive && liveSession!.stage === "notified"
   const revealed = isLive ? liveSession!.revealed : script.length
-  const handoffReached = !isLive || revealed > handoffAt
-  const before = script.slice(0, Math.min(revealed, handoffAt))
-  const showAfter = isLive ? handoffReached : isAccepted
-  const after = script.slice(handoffAt + 1, isLive ? revealed : undefined)
+  // Where the AI's part of the conversation ends: at the handoff, or the end
+  // of the script when the AI resolves everything itself.
+  const aiEnd = hasHandoff ? handoffAt : script.length
+  const aiDone =
+    !isLive || revealed > aiEnd || (!hasHandoff && revealed >= aiEnd)
+  const before = script.slice(0, Math.min(revealed, aiEnd))
+  const showAfter = hasHandoff && (isLive ? aiDone : isAccepted)
+  const after = hasHandoff
+    ? script.slice(handoffAt + 1, isLive ? revealed : undefined)
+    : []
   const nextTurn = isLive && liveSession!.typing ? script[revealed] : undefined
-  const stepsShown = handoffReached
+  const stepsShown = aiDone
     ? item.steps.length
-    : Math.floor(
-        (item.steps.length * Math.min(revealed, handoffAt)) / handoffAt
+    : Math.max(
+        Math.floor((item.steps.length * Math.min(revealed, aiEnd)) / aiEnd),
+        // Outbound journeys have already fired their trigger and consent checks.
+        isLive && direction === "outbound" ? 2 : 0
       )
 
   const statusLabel = isAccepted
     ? `Owned by ${AGENT_NAME}`
-    : isLive && !handoffReached
-      ? "Live · Ava is handling"
-      : "Awaiting agent"
+    : notified
+      ? "Live · Notification sent"
+      : isLive && !aiDone
+        ? "Live · Ava is handling"
+        : item.resolvedByAi
+          ? "Resolved by AI"
+          : "Awaiting agent"
 
   const listed = cases
     .filter((c) => accepted.has(c.scenarioId) === (tab === "handoff"))
@@ -156,17 +168,6 @@ export function AgentWorkspace() {
                   : "No conversations waiting."}
               </p>
             )}
-            {liveOnlyTitle && tab === "ai" && (
-              <div className="border-l-2 border-teal-500 bg-teal-50 px-4 py-3.5 dark:bg-teal-950/30">
-                <LivePill />
-                <p className="mt-1.5 text-sm font-semibold text-foreground">
-                  {liveOnlyTitle}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Ava is resolving this end to end — no handoff needed.
-                </p>
-              </div>
-            )}
             {listed.map((c) => (
               <QueueRow
                 key={c.scenarioId}
@@ -180,7 +181,9 @@ export function AgentWorkspace() {
 
           <div className="grid grid-cols-3 border-t border-border py-3 text-center">
             <Stat
-              value={cases.length - accepted.size}
+              value={
+                cases.filter((c) => !c.resolvedByAi).length - accepted.size
+              }
               label="Waiting"
               className="text-orange-500"
             />
@@ -203,12 +206,14 @@ export function AgentWorkspace() {
             accepted={isAccepted}
             statusLabel={statusLabel}
             live={isLive}
+            direction={direction}
           />
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
             <div className="mx-auto max-w-xl rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-center font-mono text-[11px] text-teal-800 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-300">
-              Session started · {item.channel} · CRM context loaded · Ava AI
-              assigned
+              {direction === "outbound"
+                ? `Outbound journey · ${item.channel} · Consent checked · Ava AI assigned${notified ? " · Notification sent, waiting for the customer" : ""}`
+                : `Session started · ${item.channel} · CRM context loaded · Ava AI assigned`}
             </div>
 
             {before.map((turn, i) => (
@@ -220,13 +225,16 @@ export function AgentWorkspace() {
               />
             ))}
 
-            {handoffReached && (
-              <HandoffCard
-                note={item.handoffNote}
-                accepted={isAccepted}
-                onAccept={accept}
-              />
-            )}
+            {aiDone &&
+              (hasHandoff ? (
+                <HandoffCard
+                  note={item.handoffNote}
+                  accepted={isAccepted}
+                  onAccept={accept}
+                />
+              ) : (
+                <ResolvedCard note={item.handoffNote} />
+              ))}
 
             {showAfter &&
               after.map((turn, i) => (
@@ -244,7 +252,11 @@ export function AgentWorkspace() {
 
           <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-3">
             <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
-              {isAccepted ? "Type a message" : "Accept the handoff to reply"}
+              {item.resolvedByAi
+                ? "Resolved by AI — no reply needed"
+                : isAccepted
+                  ? "Type a message"
+                  : "Accept the handoff to reply"}
             </div>
             <button
               disabled
@@ -278,8 +290,8 @@ export function AgentWorkspace() {
                 item={item}
                 accepted={isAccepted}
                 stepsShown={stepsShown}
-                summaryReady={handoffReached}
-                time={clock(handoffAt + 1)}
+                summaryReady={aiDone}
+                time={clock(aiEnd + 1)}
               />
             ) : (
               <ProfilePanel item={item} />
@@ -486,6 +498,9 @@ function QueueRow({
         )}
       </div>
       <p className="mt-1 truncate text-xs text-muted-foreground">
+        <span className="mr-1 font-medium">
+          {directionOf(item.scenarioId) === "outbound" ? "↗" : "↙"}
+        </span>
         {item.subject}
       </p>
       <div className="mt-2">
@@ -500,11 +515,13 @@ function TicketHeader({
   accepted,
   statusLabel,
   live,
+  direction,
 }: {
   item: CaseFile
   accepted: boolean
   statusLabel: string
   live: boolean
+  direction: "inbound" | "outbound"
 }) {
   return (
     <div className="border-b border-border bg-card px-4 py-4 sm:px-6">
@@ -528,6 +545,9 @@ function TicketHeader({
       <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
         <span>
           Ticket <span className="font-mono text-foreground">#{item.id}</span>
+        </span>
+        <span className="font-medium text-foreground">
+          {direction === "outbound" ? "↗ Outbound" : "↙ Inbound"}
         </span>
         <span>{item.channel}</span>
         <span>Started 10:41 AM</span>
@@ -994,6 +1014,22 @@ function RelayStatus({ relay }: { relay: ReturnType<typeof useLiveSession> }) {
       <span className={cn("size-1.5 rounded-full", tone)} />
       {label}
       <span className="font-mono text-white/40">· {relay.room}</span>
+    </div>
+  )
+}
+
+function ResolvedCard({ note }: { note: string }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950">
+        <Check className="size-5" strokeWidth={3} />
+      </div>
+      <div>
+        <div className="text-sm font-semibold text-foreground">
+          Resolved by AI
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">{note}</p>
+      </div>
     </div>
   )
 }

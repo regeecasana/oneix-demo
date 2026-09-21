@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     s.revealed! <= 500 &&
     typeof s.typing === "boolean" &&
     (s.status === "active" || s.status === "ended") &&
+    (s.stage === undefined || s.stage === "notified" || s.stage === "chat") &&
     typeof s.ts === "number"
   if (!valid)
     return Response.json({ error: "Invalid session" }, { status: 400 })
