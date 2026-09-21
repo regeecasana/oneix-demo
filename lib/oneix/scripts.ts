@@ -714,6 +714,164 @@ const enrolmentScriptContent: ChatTurnContent[] = [
 
 export const enrolmentScript = withTurnIds("enrolment", enrolmentScriptContent)
 
+const appointmentScriptContent: ChatTurnContent[] = [
+  {
+    kind: "reply",
+    text: "Can I change my cardiology appointment next Thursday? My daughter cannot take leave that day.",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Of course, Madam Lim. I can help with the appointment.\n\nI can see your cardiology follow-up next Thursday at 10:20 AM.\n\nBefore I offer later dates, I need to check two safety questions that apply to this type of appointment.\n\nAre you asking to change it only because of scheduling, or has anything about your health changed since your last visit?",
+  },
+  {
+    kind: "reply",
+    text: "Mostly because of my daughter. But I've been a bit more breathless when walking to the market this week.",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Thank you for telling me.\n\nBecause you've mentioned new or increased breathlessness, I don't want to simply move your cardiology appointment to a later date without a clinician reviewing that change.\n\nI won't try to diagnose the cause here.\n\nI can connect you to the cardiology care team now and give them the appointment and symptom information you've already shared.",
+  },
+  { kind: "reply", text: "Yes please." },
+  { kind: "handoff", to: "Jordan", role: "Cardiology Care Team" },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Hello Madam Lim, I'm Jordan from the cardiology care team.\n\nAva has told me you wanted to move next Thursday's appointment because your daughter can't attend, and that you've noticed more breathlessness while walking this week.\n\nI'll ask you a few questions so we can decide the safest next step.",
+  },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Based on the information you've given me, I'd prefer that we do not postpone your review.\n\nI've checked the clinic schedule and can offer an earlier assessment on Tuesday at 2:40 PM.\n\nWould your daughter be able to accompany you then?",
+  },
+  { kind: "reply", text: "Tuesday is much better. Yes." },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Good. I'll change the appointment to Tuesday at 2:40 PM.",
+  },
+  { kind: "system", text: "Appointment updated in patient-administration system." },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Your appointment has been updated:",
+  },
+  {
+    kind: "status",
+    title: "Appointment Updated",
+    rows: [
+      { label: "Clinic", value: "Cardiology" },
+      { label: "When", value: "Tuesday, 2:40 PM", positive: true },
+      { label: "Details sent to", value: "Your app" },
+      { label: "Pre-visit instructions", value: "Available in app" },
+    ],
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "I've sent the new appointment details to your app. The care team's approved pre-visit instructions are also available there.\n\nIf your symptoms worsen before the appointment, please follow the urgent-care instructions Nurse Jordan provided rather than waiting for the scheduled visit.",
+  },
+]
+
+export const appointmentScript = withTurnIds("appointment", appointmentScriptContent)
+
+const previsitScriptContent: ChatTurnContent[] = [
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Hi Madam Lim, a reminder from WellSG Health.\n\nYou have an appointment on:",
+  },
+  {
+    kind: "status",
+    title: "Upcoming Appointment",
+    rows: [
+      { label: "Date", value: "Tuesday, October 2" },
+      { label: "Time", value: "2:40 PM" },
+      { label: "Where", value: "Cardiology Clinic — Level 3" },
+    ],
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "Would you like to confirm, change the appointment or review your pre-visit instructions?",
+  },
+  {
+    kind: "reply",
+    text: "Confirm. What do I need to do before I come?",
+    choices: [
+      { label: "Confirm", correct: true },
+      { label: "Change the appointment" },
+      { label: "Review pre-visit instructions" },
+    ],
+  },
+  {
+    kind: "checklist",
+    from: "ai",
+    speaker: "Ava",
+    intro: "Your appointment is confirmed.\n\nFor this visit, your care team's instructions are:",
+    items: [
+      "Complete the pre-visit questionnaire",
+      "Bring your current medication list",
+      "Arrive 15 minutes before the appointment",
+    ],
+    outro: "I can help you with the questionnaire now.",
+  },
+  {
+    kind: "reply",
+    text: "I have a question. The instructions mention bringing my medication list. Should I stop taking my medicine before the appointment?",
+  },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "I understand your concern.\n\nI don't want to provide medication instructions that may not apply specifically to you.\n\nI can connect you with the cardiology care team so they can provide the correct guidance. I will share your appointment details and question with them so you do not need to repeat the information.",
+  },
+  { kind: "reply", text: "Yes, please connect me." },
+  { kind: "handoff", to: "Jordan", role: "Cardiology Care Team" },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Hello Madam Lim, I'm Jordan from the cardiology care team.\n\nAva has shared your question about your medication and your upcoming cardiology appointment.\n\nI understand you want to confirm whether there are any medication instructions before your visit. Let me review your appointment details and provide the appropriate guidance.",
+  },
+  {
+    kind: "message",
+    from: "agent",
+    speaker: "Jordan",
+    text: "Based on your appointment instructions, please continue taking your medication as prescribed by your doctor.\n\nFor your upcoming visit, please bring your current medication list so our cardiology team can check it with you.",
+  },
+  { kind: "reply", text: "Thank you. That helps." },
+  {
+    kind: "message",
+    from: "ai",
+    speaker: "Ava",
+    text: "You're welcome.\n\nYour appointment remains confirmed for Tuesday at 2:40 PM. If you have any other concerns before your visit, please contact us.",
+  },
+  {
+    kind: "status",
+    title: "Appointment Status",
+    rows: [
+      { label: "Appointment", value: "CONFIRMED", positive: true },
+      { label: "Pre-visit instructions", value: "SENT", positive: true },
+      { label: "Medication question", value: "ANSWERED by care team", positive: true },
+      { label: "Care-team interaction", value: "RECORDED", positive: true },
+      { label: "Customer action needed", value: "Questionnaire + medication list" },
+    ],
+  },
+]
+
+export const previsitScript = withTurnIds("pre-visit", previsitScriptContent)
+
 export const scriptsByScenario: Record<string, ChatTurn[]> = {
   fraud: fraudScript,
   collections: collectionsScript,
@@ -721,6 +879,8 @@ export const scriptsByScenario: Record<string, ChatTurn[]> = {
   disruption: disruptionScript,
   admissions: admissionsScript,
   enrolment: enrolmentScript,
+  appointment: appointmentScript,
+  "pre-visit": previsitScript,
 }
 
 export const caseFiles: Record<string, CaseFile> = {
@@ -850,5 +1010,51 @@ export const caseFiles: Record<string, CaseFile> = {
       "Process the deferment request without requiring additional documents",
     ],
     reason: "Offer expiry falls inside the standard deferment review window — requires an authorized administrative hold.",
+  },
+  appointment: {
+    id: "CARD-FU-2041",
+    scenarioId: "appointment",
+    customer: "Madam Lim Hoon",
+    authNote: "Authenticated hospital app session",
+    intent: "Cardiology follow-up reschedule request with a new clinical-safety signal",
+    facts: [
+      "Cardiology follow-up next Thursday, 10:20 AM",
+      "Requested change reason: daughter (registered caregiver) cannot take leave",
+      "Customer reports new or increased breathlessness walking this week",
+      "Routine postponement stopped by clinical-safety policy",
+    ],
+    actionsCompleted: [
+      "Symptom screening completed before offering later dates",
+      "No diagnosis or clinical advice given by AI",
+      "Appointment and symptom summary attached to the nurse-triage case",
+    ],
+    recommendation: [
+      "Assess symptoms per the approved clinical workflow",
+      "Check clinic schedule for an earlier assessment slot",
+      "Confirm caregiver can accompany the patient",
+    ],
+    reason: "New or worsening symptom mentioned — routine rescheduling is not permitted without clinician review.",
+  },
+  "pre-visit": {
+    id: "CARD-PV-2041",
+    scenarioId: "pre-visit",
+    customer: "Madam Lim Hoon",
+    authNote: "Authenticated hospital app session",
+    intent: "Medication-related question during pre-visit support",
+    facts: [
+      "Cardiology appointment Tuesday, 2:40 PM — confirmed via reminder",
+      "Pre-visit instructions provided: questionnaire, medication list, arrive 15 min early",
+      "Customer asked whether to stop taking medication before the visit",
+    ],
+    actionsCompleted: [
+      "Appointment confirmation written back to the scheduling record",
+      "Provider-approved pre-visit instructions shared",
+      "Medication question escalated without AI giving medication guidance",
+    ],
+    recommendation: [
+      "Review patient-specific medication orders under role-based credentials",
+      "Provide the approved guidance to the patient",
+    ],
+    reason: "Medication advice is outside the AI's authorized scope — requires a licensed clinician.",
   },
 }
