@@ -105,6 +105,12 @@ export type AudioMap = Record<string, Record<string, AudioClip>>
 export type CaseSystem =
   "Data Warehouse" | "CRM" | "Marketing/CDP" | "AI Orchestrator"
 
+/** One technical step, tagged with the system behind it. */
+export interface CaseStep {
+  system: CaseSystem
+  label: string
+}
+
 /** A run of summary text, optionally highlighted. */
 export type SummaryPart = string | { text: string; tone: "danger" | "warn" }
 
@@ -125,11 +131,12 @@ export interface CaseFile {
   /** Issue badge next to the tier. */
   issue: string
   channel: string
-  /** Enterprise systems the AI drew on — lit up in the header. */
-  systems: CaseSystem[]
   summary: SummaryPart[]
-  /** Technical steps the AI orchestrator took, in order. */
-  steps: string[]
+  /**
+   * Technical steps the AI took, in order. Each names the one system doing the
+   * work, which is what lights up in the Agent Workspace header as it happens.
+   */
+  steps: CaseStep[]
   /** Text on the "AI Handoff" card in the transcript. */
   handoffNote: string
   recommendation: string[]
