@@ -8,6 +8,7 @@ import { industries } from "@/lib/oneix/industries"
 import { useLiveSession } from "@/hooks/use-live-session"
 import type {
   CaseFile,
+  CaseStep,
   CaseSystem,
   ChatTurn,
   SummaryPart,
@@ -55,6 +56,10 @@ export function AgentWorkspace() {
   const [tab, setTab] = useState<"ai" | "handoff">("ai")
   const [panel, setPanel] = useState<"summary" | "profile">("summary")
   const [seenSession, setSeenSession] = useState<string | null>(null)
+  const [pinned, setPinned] = useState<{
+    caseId: string
+    index: number
+  } | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
 
   const liveSession =
@@ -120,6 +125,25 @@ export function AgentWorkspace() {
           ? "Resolved by AI"
           : "Awaiting agent"
 
+  const doneSteps: CaseStep[] = item.steps.slice(0, stepsShown)
+  const steps: CaseStep[] = isAccepted
+    ? [
+        ...doneSteps,
+        { system: "CRM", label: `Handoff accepted by ${AGENT_NAME}` },
+      ]
+    : doneSteps
+  // Live, the header follows the AI's latest step like a stepper. On a finished
+  // ticket you can click any step to see which system it used.
+  const pinnedIndex =
+    !isLive && pinned?.caseId === selectedId ? pinned.index : null
+  const activeIndex =
+    steps.length === 0
+      ? null
+      : pinnedIndex !== null && pinnedIndex < steps.length
+        ? pinnedIndex
+        : steps.length - 1
+  const activeSystem = activeIndex === null ? null : steps[activeIndex].system
+
   const listed = cases
     .filter((c) => accepted.has(c.scenarioId) === (tab === "handoff"))
     .sort(
@@ -140,7 +164,7 @@ export function AgentWorkspace() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background lg:h-svh lg:overflow-hidden">
-      <WorkspaceHeader active={item.systems} relay={relay} />
+      <WorkspaceHeader active={activeSystem} relay={relay} />
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
         <aside className="flex min-h-0 flex-col border-b border-border bg-card lg:border-r lg:border-b-0">
@@ -288,8 +312,13 @@ export function AgentWorkspace() {
             {panel === "summary" ? (
               <SummaryPanel
                 item={item}
-                accepted={isAccepted}
-                stepsShown={stepsShown}
+                steps={steps}
+                activeIndex={activeIndex}
+                onSelectStep={
+                  isLive
+                    ? undefined
+                    : (index) => setPinned({ caseId: selectedId, index })
+                }
                 summaryReady={aiDone}
                 time={clock(aiEnd + 1)}
               />
@@ -307,7 +336,7 @@ function WorkspaceHeader({
   active,
   relay,
 }: {
-  active: CaseSystem[]
+  active: CaseSystem | null
   relay: ReturnType<typeof useLiveSession>
 }) {
   return (
@@ -326,21 +355,21 @@ function WorkspaceHeader({
 
       <div className="hidden items-center gap-2 md:flex">
         {SYSTEMS.map((system) => {
-          const on = active.includes(system)
+          const on = active === system
           return (
             <span
               key={system}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors",
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all duration-300",
                 on
-                  ? "border-teal-400/30 bg-teal-400/10 text-white"
+                  ? "border-teal-400/50 bg-teal-400/15 text-white shadow-[0_0_14px_rgba(45,212,191,0.35)]"
                   : "border-white/10 text-white/40"
               )}
             >
               <span
                 className={cn(
-                  "size-1.5 rounded-full",
-                  on ? "bg-teal-400" : "bg-white/25"
+                  "size-1.5 rounded-full transition-colors duration-300",
+                  on ? "animate-pulse bg-teal-400" : "bg-white/25"
                 )}
               />
               {system}
@@ -617,20 +646,19 @@ function HandoffCard({
 
 function SummaryPanel({
   item,
-  accepted,
-  stepsShown,
+  steps,
+  activeIndex,
+  onSelectStep,
   summaryReady,
   time,
 }: {
   item: CaseFile
-  accepted: boolean
-  stepsShown: number
+  steps: CaseStep[]
+  activeIndex: number | null
+  onSelectStep?: (index: number) => void
   summaryReady: boolean
   time: string
 }) {
-  const done = item.steps.slice(0, stepsShown)
-  const steps = accepted ? [...done, `Handoff accepted by ${AGENT_NAME}`] : done
-
   return (
     <>
       <section className="rounded-2xl border border-teal-200 bg-teal-50/60 p-4 dark:border-teal-900/60 dark:bg-teal-950/20">
@@ -665,18 +693,45 @@ function SummaryPanel({
             Waiting for the first action…
           </p>
         )}
-        <ul className="space-y-2.5">
-          {steps.map((step, i) => (
-            <li
-              key={step}
-              className="flex items-start justify-between gap-3 text-[13px] text-foreground"
-            >
-              <span>{step}</span>
-              <span className="shrink-0 pt-0.5 font-mono text-[10px] text-muted-foreground">
-                {clock(i)}
-              </span>
-            </li>
-          ))}
+        <ul className="space-y-1">
+          {steps.map((step, i) => {
+            const active = i === activeIndex
+            const Row = onSelectStep ? "button" : "div"
+            return (
+              <li key={step.label}>
+                <Row
+                  {...(onSelectStep
+                    ? {
+                        onClick: () => onSelectStep(i),
+                        type: "button" as const,
+                      }
+                    : {})}
+                  className={cn(
+                    "flex w-full items-start justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-[13px] text-foreground transition-colors",
+                    active && "bg-teal-500/10 ring-1 ring-teal-500/30",
+                    onSelectStep && !active && "hover:bg-muted"
+                  )}
+                >
+                  <span>
+                    {step.label}
+                    <span
+                      className={cn(
+                        "mt-0.5 block font-mono text-[10px] tracking-wide uppercase",
+                        active
+                          ? "text-teal-600 dark:text-teal-300"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {step.system}
+                    </span>
+                  </span>
+                  <span className="shrink-0 pt-0.5 font-mono text-[10px] text-muted-foreground">
+                    {clock(i)}
+                  </span>
+                </Row>
+              </li>
+            )
+          })}
         </ul>
       </section>
 
