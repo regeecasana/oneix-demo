@@ -37,7 +37,7 @@ export function IndustryGrid({
                 "relative flex flex-col items-center gap-2 rounded-xl border bg-card px-4 py-5 text-left transition-all",
                 selected
                   ? "border-teal-400 bg-teal-50 shadow-sm dark:bg-teal-950/30"
-                  : "border-border hover:border-teal-300/60 hover:shadow-sm",
+                  : "border-border hover:border-teal-300/60 hover:shadow-sm"
               )}
             >
               {selected && (
@@ -45,8 +45,20 @@ export function IndustryGrid({
                   <Check className="size-2.5" strokeWidth={3} />
                 </span>
               )}
-              <Icon className={cn("size-5", selected ? "text-teal-600" : "text-muted-foreground")} />
-              <span className={cn("text-sm font-medium", selected ? "text-teal-700 dark:text-teal-300" : "text-foreground")}>
+              <Icon
+                className={cn(
+                  "size-5",
+                  selected ? "text-teal-600" : "text-muted-foreground"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  selected
+                    ? "text-teal-700 dark:text-teal-300"
+                    : "text-foreground"
+                )}
+              >
                 {industry.label}
               </span>
             </button>
@@ -74,22 +86,15 @@ export function IndustryGrid({
                       ? selected
                         ? "border-teal-400 bg-teal-50 dark:bg-teal-950/30"
                         : "border-border hover:border-teal-300/60 hover:shadow-sm"
-                      : "cursor-not-allowed border-border opacity-60",
+                      : "cursor-not-allowed border-border opacity-60"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "mb-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
-                      scenario.direction === "inbound"
-                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                        : "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
-                    )}
-                  >
-                    {scenario.direction === "inbound" ? "↙ Inbound" : "↗ Outbound"}
-                    {!scenario.available && <span className="ml-1 font-normal italic">· Coming soon</span>}
+                  <span className="text-sm font-medium text-foreground">
+                    {scenario.title}
                   </span>
-                  <span className="text-sm font-medium text-foreground">{scenario.title}</span>
-                  <span className="mt-0.5 text-xs text-muted-foreground">{scenario.description}</span>
+                  <span className="mt-0.5 text-xs text-muted-foreground">
+                    {scenario.description}
+                  </span>
                   {isOpen && (
                     <span className="mt-2 flex items-center gap-1.5 text-xs text-teal-600">
                       <span className="size-1.5 rounded-full bg-teal-500" />
