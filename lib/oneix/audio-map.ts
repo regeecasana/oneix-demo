@@ -70,4 +70,20 @@ export const audioMap: AudioMap = {
     "collections-agent-6": { src: "/audio/bfsi/collection/jordan/6.mp3" },
     "collections-agent-7": { src: "/audio/bfsi/collection/jordan/7.mp3" },
   },
+  rebooking: {
+    "rebooking-ai-1": { src: "/audio/travel/rebook/ava/1.mp3" },
+    // The three-option card (intro + Options A/B/C + closing question) is one clip.
+    "rebooking-options-1": { src: "/audio/travel/rebook/ava/2.mp3" },
+    "rebooking-ai-2": { src: "/audio/travel/rebook/ava/3.mp3" },
+    // Prepared-request checklist, with its intro and "I'll bring in a specialist" outro.
+    "rebooking-checklist-1": { src: "/audio/travel/rebook/ava/4.mp3" },
+    // "Connecting you to Jordan · Ticketing Specialist" — chime, not dialogue.
+    "rebooking-handoff-1": { src: DING },
+    "rebooking-agent-1": { src: "/audio/travel/rebook/jordan/1.mp3" },
+    "rebooking-agent-2": { src: "/audio/travel/rebook/jordan/2.mp3" },
+    "rebooking-agent-3": { src: "/audio/travel/rebook/jordan/3.mp3" },
+    "rebooking-ai-3": { src: "/audio/travel/rebook/ava/5.mp3" },
+    "rebooking-ai-4": { src: "/audio/travel/rebook/ava/6.mp3" },
+    "rebooking-ai-5": { src: "/audio/travel/rebook/ava/7.mp3" },
+  },
 }
