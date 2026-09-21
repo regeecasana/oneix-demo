@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { AudioBatch } from "@/lib/oneix/get-audio-batch"
 import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
 import { audioMap } from "@/lib/oneix/audio-map"
+import { useSessionPublisher } from "./use-session-publisher"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 
 /**
@@ -36,8 +37,14 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const [rendered, setRendered] = useState<ChatTurn[]>([])
   const [index, setIndex] = useState(0)
   const [typing, setTyping] = useState(false)
-  const [activeSpeaker, setActiveSpeaker] = useState<ActiveSpeaker>({ name: "Ava", tone: "ai" })
+  const [activeSpeaker, setActiveSpeaker] = useState<ActiveSpeaker>({
+    name: "Ava",
+    tone: "ai",
+  })
   const [verdicts, setVerdicts] = useState<Record<string, TxnVerdict>>({})
+
+  // Mirror progress to the Agent Workspace (/agent), which may be on another device.
+  useSessionPublisher(scenarioId, rendered.length, typing)
 
   const pending = index < script.length ? script[index] : null
   const awaitingReply = pending?.kind === "reply"
@@ -50,7 +57,8 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   // "This was me" / "Don't recognize" per item before the customer can respond.
   const lastRendered = rendered[rendered.length - 1]
   const requiresClassification =
-    lastRendered?.kind === "transactions" && lastRendered.items.some((item) => !verdicts[item.id])
+    lastRendered?.kind === "transactions" &&
+    lastRendered.items.some((item) => !verdicts[item.id])
   const readyToReply = awaitingReply && !requiresClassification
 
   function classify(itemId: string, verdict: TxnVerdict) {
@@ -61,7 +69,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   // null here just means "this turn has no mapped clip, use the timed fallback".
   const batch: AudioBatch | null = useMemo(
     () => (pending ? getAudioBatch(audioMap, scenarioId, script, index) : null),
-    [scenarioId, script, index, pending],
+    [scenarioId, script, index, pending]
   )
 
   useEffect(() => {
