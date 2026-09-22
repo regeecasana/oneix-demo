@@ -29,6 +29,7 @@ import {
   BrainCircuit,
   ChevronDown,
   Zap,
+  Eye,
 } from "lucide-react"
 import type { IndustryDef } from "@/lib/oneix/types"
 
@@ -66,4 +67,5 @@ export {
   BrainCircuit,
   ChevronDown,
   Zap,
+  Eye,
 }

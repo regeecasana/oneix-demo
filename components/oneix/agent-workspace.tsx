@@ -28,6 +28,7 @@ import {
   BrainCircuit,
   ChevronDown,
   Zap,
+  Eye,
 } from "./icons"
 import { ThemeToggle } from "./theme-toggle"
 
@@ -249,7 +250,7 @@ export function AgentWorkspace() {
           />
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
-            <div className="mx-auto max-w-xl rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-center font-mono text-[11px] text-teal-800 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-300">
+            <div className="mx-auto max-w-xl rounded-full border border-brand-teal/25 bg-brand-teal/10 px-4 py-2 text-center font-mono text-[11px] text-brand-navy dark:text-brand-teal">
               {direction === "outbound"
                 ? `Outbound journey · ${item.channel} · Consent checked · Ava AI assigned${notified ? " · Notification sent, waiting for the customer" : ""}`
                 : `Session started · ${item.channel} · CDP context loaded · Ava AI assigned`}
@@ -310,7 +311,7 @@ export function AgentWorkspace() {
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submitDraft()}
                 placeholder="Type a message"
-                className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-teal-400"
+                className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-brand-teal"
               />
             ) : (
               <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
@@ -325,7 +326,7 @@ export function AgentWorkspace() {
               onClick={liveHandoffActive ? submitDraft : undefined}
               disabled={!liveHandoffActive || !draft.trim()}
               aria-label="Send"
-              className="flex size-10 items-center justify-center rounded-xl bg-teal-700 text-white transition-colors hover:bg-teal-800 disabled:opacity-40"
+              className="flex size-10 items-center justify-center rounded-xl bg-brand-navy text-white transition-colors hover:bg-brand-navy/85 disabled:opacity-40"
             >
               <ArrowUp className="size-4" />
             </button>
@@ -389,14 +390,14 @@ function WorkspaceHeader({
   relay: ReturnType<typeof useLiveSession>
 }) {
   return (
-    <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-teal-900/40 bg-linear-to-r from-[#04222b] to-[#062f3a] px-4 py-3 text-white">
+    <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 text-foreground dark:border-white/10 dark:bg-brand-navy dark:text-white">
       <div className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-teal-500 text-sm font-bold text-white">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-brand-navy text-sm font-bold text-white dark:bg-brand-teal dark:text-brand-navy">
           O
         </div>
         <div className="leading-tight">
           <div className="text-sm font-semibold">oneix</div>
-          <div className="text-[10px] font-medium tracking-[0.18em] text-teal-300/80 uppercase">
+          <div className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground uppercase dark:text-brand-teal/70">
             AI Agent Workspace
           </div>
         </div>
@@ -410,21 +411,26 @@ function WorkspaceHeader({
             <span
               key={system}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all duration-300",
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors duration-300",
                 on
-                  ? "border-teal-400/50 bg-teal-400/15 text-white shadow-[0_0_14px_rgba(45,212,191,0.35)]"
+                  ? "border-brand-teal/50 bg-brand-teal/15 text-foreground dark:text-white"
                   : done
-                    ? "border-teal-400/25 text-white/70"
-                    : "border-white/10 text-white/40"
+                    ? "border-brand-teal/25 text-muted-foreground dark:text-white/70"
+                    : "border-border text-muted-foreground/60 dark:border-white/10 dark:text-white/40"
               )}
             >
               {done ? (
-                <Check className="size-3 text-teal-400" strokeWidth={3} />
+                <Check
+                  className="size-3 text-brand-navy dark:text-brand-teal"
+                  strokeWidth={3}
+                />
               ) : (
                 <span
                   className={cn(
                     "size-1.5 rounded-full transition-colors duration-300",
-                    on ? "animate-pulse bg-teal-400" : "bg-white/25"
+                    on
+                      ? "animate-pulse bg-brand-teal"
+                      : "bg-muted-foreground/40 dark:bg-white/25"
                   )}
                 />
               )}
@@ -438,12 +444,12 @@ function WorkspaceHeader({
         <RelayStatus relay={relay} />
         <ThemeToggle />
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-full bg-orange-400 text-sm font-bold text-[#04222b]">
+          <div className="flex size-9 items-center justify-center rounded-full bg-brand-navy text-sm font-bold text-white dark:bg-brand-teal dark:text-brand-navy">
             {AGENT_NAME[0]}
           </div>
           <div className="leading-tight">
             <div className="text-sm font-semibold">{AGENT_NAME}</div>
-            <div className="text-[10px] font-medium tracking-[0.18em] text-orange-300 uppercase">
+            <div className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground uppercase dark:text-brand-teal/70">
               Agent
             </div>
           </div>
@@ -468,7 +474,7 @@ function TabButton({
       className={cn(
         "flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors",
         active
-          ? "bg-card text-teal-700 shadow-sm dark:text-teal-300"
+          ? "bg-card text-brand-navy shadow-sm dark:text-brand-teal"
           : "text-muted-foreground hover:text-foreground"
       )}
     >
@@ -492,7 +498,7 @@ function PanelTab({
       className={cn(
         "flex items-center justify-center gap-1.5 border-b-2 py-3 transition-colors",
         active
-          ? "border-teal-600 text-teal-700 dark:text-teal-300"
+          ? "border-brand-navy text-brand-navy dark:border-brand-teal dark:text-brand-teal"
           : "border-transparent text-muted-foreground hover:text-foreground"
       )}
     >
@@ -503,42 +509,8 @@ function PanelTab({
 
 function Count({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-teal-100 px-1.5 py-px text-[10px] text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+    <span className="rounded-full bg-brand-teal/15 px-1.5 py-px text-[10px] text-brand-navy dark:text-brand-teal">
       {children}
-    </span>
-  )
-}
-
-function Stat({
-  value,
-  label,
-  className,
-}: {
-  value: number
-  label: string
-  className: string
-}) {
-  return (
-    <div>
-      <div className={cn("text-2xl font-bold", className)}>{value}</div>
-      <div className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
-        {label}
-      </div>
-    </div>
-  )
-}
-
-function PriorityBadge({ priority }: { priority: CaseFile["priority"] }) {
-  return (
-    <span
-      className={cn(
-        "rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase",
-        priority === "High"
-          ? "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
-          : "border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300"
-      )}
-    >
-      {priority}
     </span>
   )
 }
@@ -560,7 +532,7 @@ function QueueRow({
       className={cn(
         "block w-full border-l-2 px-4 py-3.5 text-left transition-colors",
         active
-          ? "border-teal-500 bg-teal-50 dark:bg-teal-950/30"
+          ? "border-brand-teal bg-brand-teal/10"
           : "border-transparent hover:bg-muted/50"
       )}
     >
@@ -568,14 +540,14 @@ function QueueRow({
         <span
           className={cn(
             "size-2 rounded-full",
-            item.priority === "High" ? "bg-rose-500" : "bg-amber-500"
+            item.priority === "High" ? "bg-brand-navy" : "bg-brand-teal"
           )}
         />
         <span className="flex-1 truncate text-sm font-semibold text-foreground">
           {item.customer}
         </span>
         {live ? (
-          <LivePill />
+          <LiveIndicator />
         ) : (
           <span className="text-[11px] text-muted-foreground">
             {item.waiting}
@@ -588,9 +560,6 @@ function QueueRow({
         </span>
         {item.subject}
       </p>
-      <div className="mt-2">
-        <PriorityBadge priority={item.priority} />
-      </div>
     </button>
   )
 }
@@ -613,51 +582,55 @@ function TicketHeader({
   onTakeover: () => void
 }) {
   return (
-    <div className="border-b border-border bg-card px-4 py-4 sm:px-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={cn(
-            "size-2.5 rounded-full",
-            item.priority === "High" ? "bg-rose-500" : "bg-amber-500"
-          )}
-        />
-        <h2 className="text-lg font-semibold text-foreground">
-          {item.customer}
-        </h2>
-        <span className="rounded-full border border-teal-300 bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300">
-          {item.tier}
-        </span>
-        <span className="flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-600 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
-          <TriangleAlert className="size-3" /> {item.issue}
-        </span>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
-        <span>
-          Ticket <span className="font-mono text-foreground">#{item.id}</span>
-        </span>
-        <span className="font-medium text-foreground">
-          {direction === "outbound" ? "↗ Outbound" : "↙ Inbound"}
-        </span>
-        <span>{item.channel}</span>
-        <span>Started 10:41 AM</span>
-        <span
-          className={cn(
-            "font-mono font-semibold",
-            accepted ? "text-emerald-600" : "text-teal-700 dark:text-teal-300"
-          )}
-        >
-          {statusLabel}
-        </span>
-        {live && <LivePill />}
-        {canTakeover && (
-          <button
-            onClick={onTakeover}
-            className="flex items-center gap-1 rounded-full bg-rose-600 px-3 py-1 text-[11px] font-bold tracking-wider text-white uppercase transition-colors hover:bg-rose-700"
+    <div className="flex items-start justify-between gap-4 border-b border-border bg-card px-4 py-4 sm:px-6">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              "size-2.5 rounded-full",
+              item.priority === "High" ? "bg-brand-navy" : "bg-brand-teal"
+            )}
+          />
+          <h2 className="text-lg font-semibold text-foreground">
+            {item.customer}
+          </h2>
+          <span className="rounded-full border border-brand-teal/30 bg-brand-teal/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand-navy dark:text-brand-teal">
+            {item.tier}
+          </span>
+          <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+            <TriangleAlert className="size-3" /> {item.issue}
+          </span>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+          <span>
+            Ticket <span className="font-mono text-foreground">#{item.id}</span>
+          </span>
+          <span className="font-medium text-foreground">
+            {direction === "outbound" ? "↗ Outbound" : "↙ Inbound"}
+          </span>
+          <span>{item.channel}</span>
+          <span>Started 10:41 AM</span>
+          <span
+            className={cn(
+              "font-mono font-semibold",
+              accepted
+                ? "text-brand-navy dark:text-brand-teal"
+                : "text-muted-foreground"
+            )}
           >
-            <Zap className="size-3" /> Takeover
-          </button>
-        )}
+            {statusLabel}
+          </span>
+          {live && <LiveIndicator />}
+        </div>
       </div>
+      {canTakeover && (
+        <button
+          onClick={onTakeover}
+          className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-navy/85 dark:bg-brand-teal dark:text-brand-navy dark:hover:bg-brand-teal/85"
+        >
+          Takeover
+        </button>
+      )}
     </div>
   )
 }
@@ -676,16 +649,16 @@ function HandoffCard({
       className={cn(
         "flex flex-wrap items-center gap-4 rounded-2xl border px-4 py-3.5",
         accepted
-          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30"
-          : "border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30"
+          ? "border-brand-teal/30 bg-brand-teal/10"
+          : "border-border bg-muted/40"
       )}
     >
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-xl",
           accepted
-            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950"
-            : "bg-rose-100 text-rose-500 dark:bg-rose-950"
+            ? "bg-brand-teal/20 text-brand-navy dark:text-brand-teal"
+            : "bg-muted text-muted-foreground"
         )}
       >
         {accepted ? (
@@ -703,7 +676,7 @@ function HandoffCard({
       {!accepted && (
         <button
           onClick={onAccept}
-          className="rounded-lg bg-rose-600 px-5 py-2 text-xs font-bold tracking-wider text-white uppercase transition-colors hover:bg-rose-700"
+          className="rounded-lg bg-brand-navy px-5 py-2 text-xs font-bold tracking-wider text-white uppercase transition-colors hover:bg-brand-navy/85"
         >
           Accept
         </button>
@@ -729,9 +702,9 @@ function SummaryPanel({
 }) {
   return (
     <>
-      <section className="rounded-2xl border border-teal-200 bg-teal-50/60 p-4 dark:border-teal-900/60 dark:bg-teal-950/20">
+      <section className="rounded-2xl border border-brand-teal/25 bg-brand-teal/10 p-4">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-teal-700 uppercase dark:text-teal-300">
+          <h3 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-brand-navy uppercase dark:text-brand-teal">
             <Sparkles className="size-3.5" /> AI Summary
           </h3>
           <span className="font-mono text-[10px] text-muted-foreground">
@@ -776,7 +749,7 @@ function SummaryPanel({
                     : {})}
                   className={cn(
                     "flex w-full items-start justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-[13px] text-foreground transition-colors",
-                    active && "bg-teal-500/10 ring-1 ring-teal-500/30",
+                    active && "bg-brand-teal/10 ring-1 ring-brand-teal/30",
                     onSelectStep && !active && "hover:bg-muted"
                   )}
                 >
@@ -786,7 +759,7 @@ function SummaryPanel({
                       className={cn(
                         "mt-0.5 block font-mono text-[10px] tracking-wide uppercase",
                         active
-                          ? "text-teal-600 dark:text-teal-300"
+                          ? "text-brand-navy dark:text-brand-teal"
                           : "text-muted-foreground"
                       )}
                     >
@@ -803,14 +776,14 @@ function SummaryPanel({
         </ul>
       </section>
 
-      <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
-        <h3 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-amber-700 uppercase dark:text-amber-300">
+      <section className="rounded-2xl border border-border bg-muted/40 p-4">
+        <h3 className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
           <Sparkles className="size-3.5" /> AI Agent Recommendations
         </h3>
         <ol className="space-y-2">
           {item.recommendation.map((rec, i) => (
             <li key={rec} className="flex gap-2 text-[13px] text-foreground">
-              <span className="font-semibold text-amber-600 dark:text-amber-300">
+              <span className="font-semibold text-brand-navy dark:text-brand-teal">
                 {i + 1}.
               </span>
               {rec}
@@ -825,14 +798,7 @@ function SummaryPanel({
 function SummaryText({ part }: { part: SummaryPart }) {
   if (typeof part === "string") return <>{part}</>
   return (
-    <strong
-      className={cn(
-        "font-semibold",
-        part.tone === "danger"
-          ? "text-rose-600 dark:text-rose-400"
-          : "text-orange-500 dark:text-orange-400"
-      )}
-    >
+    <strong className="font-semibold text-brand-navy dark:text-brand-teal">
       {part.text}
     </strong>
   )
@@ -854,7 +820,7 @@ function ProfileHeader({ item }: { item: CaseFile }) {
   return (
     <div className="shrink-0 border-b border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-700 to-teal-400 text-sm font-bold text-white">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-navy text-sm font-bold text-white">
           {initials}
         </div>
         <div className="min-w-0">
@@ -883,7 +849,7 @@ function ProfileHeader({ item }: { item: CaseFile }) {
       {rows.length > 4 && (
         <button
           onClick={() => setOpen((o) => !o)}
-          className="mt-2.5 flex items-center gap-1 text-[11px] font-semibold text-teal-700 dark:text-teal-300"
+          className="mt-2.5 flex items-center gap-1 text-[11px] font-semibold text-brand-navy dark:text-brand-teal"
         >
           {open ? "Show less" : `Show all (${rows.length})`}
           <ChevronDown
@@ -901,27 +867,27 @@ const SYSTEM_INFO: Record<
 > = {
   "Data Warehouse": {
     subtitle: "Enterprise data foundation",
-    node: "bg-teal-600 text-white",
-    card: "border-teal-200 bg-teal-50/60 dark:border-teal-900/60 dark:bg-teal-950/20",
-    title: "text-teal-700 dark:text-teal-300",
+    node: "bg-brand-navy text-white",
+    card: "border-brand-teal/25 bg-brand-teal/10",
+    title: "text-brand-navy dark:text-brand-teal",
   },
   CDP: {
     subtitle: "Customer data & full context",
-    node: "bg-[#0a3a4a] text-white",
-    card: "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40",
-    title: "text-[#0a3a4a] dark:text-slate-200",
+    node: "bg-brand-navy text-white",
+    card: "border-brand-teal/25 bg-brand-teal/10",
+    title: "text-brand-navy dark:text-brand-teal",
   },
   Marketing: {
     subtitle: "Segmentation & journey orchestration",
-    node: "bg-orange-500 text-white",
-    card: "border-orange-200 bg-orange-50/60 dark:border-orange-900/60 dark:bg-orange-950/20",
-    title: "text-orange-600 dark:text-orange-300",
+    node: "bg-brand-navy text-white",
+    card: "border-brand-teal/25 bg-brand-teal/10",
+    title: "text-brand-navy dark:text-brand-teal",
   },
   "AI Orchestrator": {
     subtitle: "GenAI · Agentic AI · LLM reasoning",
-    node: "bg-rose-500 text-white",
-    card: "border-rose-200 bg-rose-50/60 dark:border-rose-900/60 dark:bg-rose-950/20",
-    title: "text-rose-600 dark:text-rose-300",
+    node: "bg-brand-navy text-white",
+    card: "border-brand-teal/25 bg-brand-teal/10",
+    title: "text-brand-navy dark:text-brand-teal",
   },
 }
 
@@ -945,8 +911,8 @@ function OrchestrationPanel({
 }) {
   return (
     <>
-      <section className="rounded-2xl bg-linear-to-br from-[#04222b] to-[#0a3a4a] p-4 text-white">
-        <h3 className="text-xs font-bold tracking-[0.18em] text-teal-300 uppercase">
+      <section className="rounded-2xl bg-brand-navy p-4 text-white">
+        <h3 className="text-xs font-bold tracking-[0.18em] text-brand-teal uppercase">
           Orchestration
         </h3>
         <p className="mt-1.5 text-[13px] leading-snug text-white/80">
@@ -970,7 +936,7 @@ function OrchestrationPanel({
                 <span
                   className={cn(
                     "absolute top-8 -bottom-0 left-4 w-px -translate-x-1/2",
-                    done || active ? "bg-teal-500/50" : "bg-border"
+                    done || active ? "bg-brand-teal/50" : "bg-border"
                   )}
                 />
               )}
@@ -980,7 +946,7 @@ function OrchestrationPanel({
                   active || done
                     ? info.node
                     : "border-2 border-border bg-card text-muted-foreground",
-                  active && "ring-4 ring-rose-400/25"
+                  active && "ring-4 ring-brand-teal/25"
                 )}
               >
                 {active ? (
@@ -1008,8 +974,8 @@ function OrchestrationPanel({
                     {system}
                   </span>
                   {active && (
-                    <span className="flex items-center gap-1 rounded-full border border-rose-300 bg-rose-100 px-1.5 py-px text-[9px] font-bold tracking-wider text-rose-600 uppercase dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300">
-                      <span className="size-1.5 animate-pulse rounded-full bg-rose-500" />
+                    <span className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-brand-navy uppercase dark:text-brand-teal">
+                      <span className="size-1.5 animate-pulse rounded-full bg-brand-teal" />
                       Active
                     </span>
                   )}
@@ -1051,8 +1017,8 @@ function OrchestrationPanel({
 function AiLabel({ time }: { time: string }) {
   return (
     <div className="mb-1 flex items-center gap-1.5 text-xs">
-      <Sparkles className="size-3 text-teal-600 dark:text-teal-400" />
-      <span className="font-semibold text-teal-700 dark:text-teal-300">
+      <Sparkles className="size-3 text-brand-navy dark:text-brand-teal" />
+      <span className="font-semibold text-brand-navy dark:text-brand-teal">
         Ava AI
       </span>
       <span className="font-mono text-[10px] text-muted-foreground">
@@ -1085,7 +1051,7 @@ function TranscriptTurn({
                   {time} AM
                 </span>
                 <span className="text-muted-foreground">Live Agent</span>
-                <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                <span className="font-semibold text-brand-navy dark:text-brand-teal">
                   {turn.speaker}
                 </span>
               </div>
@@ -1096,8 +1062,8 @@ function TranscriptTurn({
               className={cn(
                 "rounded-2xl border px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground",
                 live
-                  ? "rounded-tr-md border-indigo-200 bg-indigo-50 dark:border-indigo-900/60 dark:bg-indigo-950/30"
-                  : "rounded-tl-md border-teal-200 bg-teal-50 dark:border-teal-900/60 dark:bg-teal-950/30"
+                  ? "rounded-tr-md border-brand-navy/20 bg-brand-navy/8"
+                  : "rounded-tl-md border-brand-teal/25 bg-brand-teal/10"
               )}
             >
               {turn.text}
@@ -1110,13 +1076,13 @@ function TranscriptTurn({
       return (
         <div className="max-w-[85%]">
           <AiLabel time={time} />
-          <div className="space-y-2 rounded-2xl rounded-tl-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-foreground dark:border-teal-900/60 dark:bg-teal-950/30">
+          <div className="space-y-2 rounded-2xl rounded-tl-md border border-brand-teal/25 bg-brand-teal/10 px-4 py-3 text-sm text-foreground">
             {turn.intro && <p className="whitespace-pre-line">{turn.intro}</p>}
             <ul className="space-y-1">
               {turn.items.map((it) => (
                 <li key={it} className="flex items-start gap-1.5">
                   <Check
-                    className="mt-0.5 size-3.5 shrink-0 text-teal-600"
+                    className="mt-0.5 size-3.5 shrink-0 text-brand-navy dark:text-brand-teal"
                     strokeWidth={3}
                   />{" "}
                   {it}
@@ -1148,14 +1114,14 @@ function TranscriptTurn({
             </span>
           </div>
           <div className="flex items-end gap-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0a3a4a] text-[10px] font-bold text-white">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-navy text-[10px] font-bold text-white">
               {customer
                 .split(" ")
                 .map((w) => w[0])
                 .slice(-2)
                 .join("")}
             </div>
-            <div className="max-w-[26rem] rounded-2xl rounded-bl-md bg-[#0a3a4a] px-4 py-3 text-sm leading-relaxed text-white">
+            <div className="max-w-[26rem] rounded-2xl rounded-bl-md bg-brand-navy px-4 py-3 text-sm leading-relaxed text-white">
               {turn.text}
             </div>
           </div>
@@ -1166,7 +1132,7 @@ function TranscriptTurn({
       return (
         <div className="flex items-center justify-center gap-1.5 text-center font-mono text-[11px] text-muted-foreground">
           {turn.kind === "faceid" && (
-            <ShieldCheck className="size-3.5 text-teal-600" />
+            <ShieldCheck className="size-3.5 text-brand-navy dark:text-brand-teal" />
           )}
           {turn.text}
         </div>
@@ -1174,7 +1140,7 @@ function TranscriptTurn({
     case "alert":
       return (
         <div className="mx-auto max-w-sm rounded-xl border border-border bg-card px-4 py-2.5 text-center">
-          <div className="text-[10px] font-bold tracking-wider text-rose-600 uppercase dark:text-rose-400">
+          <div className="text-[10px] font-bold tracking-wider text-brand-navy uppercase dark:text-brand-teal">
             {turn.title}
           </div>
           {turn.lines.map((l) => (
@@ -1214,7 +1180,9 @@ function InfoCard({
               <span
                 className={cn(
                   "font-medium",
-                  r.positive ? "text-emerald-600" : "text-foreground"
+                  r.positive
+                    ? "text-brand-navy dark:text-brand-teal"
+                    : "text-foreground"
                 )}
               >
                 {r.value}
@@ -1265,11 +1233,13 @@ function InfoCard({
   )
 }
 
-function LivePill() {
+function LiveIndicator() {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
-      <span className="size-1.5 animate-pulse rounded-full bg-white" />
-      Live
+    <span
+      title="An agent is viewing this ticket"
+      className="inline-flex text-brand-navy dark:text-brand-teal"
+    >
+      <Eye className="size-4" />
     </span>
   )
 }
@@ -1285,14 +1255,7 @@ function TypingRow({ turn }: { turn: ChatTurn }) {
   }
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span
-        className={cn(
-          "font-semibold",
-          turn.from === "agent"
-            ? "text-indigo-700 dark:text-indigo-300"
-            : "text-teal-700 dark:text-teal-300"
-        )}
-      >
+      <span className="font-semibold text-brand-navy dark:text-brand-teal">
         {turn.speaker}
       </span>
       is typing
@@ -1318,10 +1281,13 @@ function RelayStatus({ relay }: { relay: ReturnType<typeof useLiveSession> }) {
     : unconfigured
       ? "Sync not configured"
       : "Live sync"
-  const tone = !relay.online || unconfigured ? "bg-amber-400" : "bg-emerald-400"
+  const tone =
+    !relay.online || unconfigured
+      ? "bg-muted-foreground/40 dark:bg-white/30"
+      : "bg-brand-teal"
   return (
     <div
-      className="hidden items-center gap-1.5 text-[11px] text-white/70 sm:flex"
+      className="hidden items-center gap-1.5 text-[11px] text-muted-foreground sm:flex dark:text-white/70"
       title={
         unconfigured
           ? "Add an Upstash Redis integration on Vercel so separate devices can sync."
@@ -1330,15 +1296,17 @@ function RelayStatus({ relay }: { relay: ReturnType<typeof useLiveSession> }) {
     >
       <span className={cn("size-1.5 rounded-full", tone)} />
       {label}
-      <span className="font-mono text-white/40">· {relay.room}</span>
+      <span className="font-mono text-muted-foreground/70 dark:text-white/40">
+        · {relay.room}
+      </span>
     </div>
   )
 }
 
 function ResolvedCard({ note }: { note: string }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 dark:border-emerald-900/60 dark:bg-emerald-950/30">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950">
+    <div className="flex items-center gap-4 rounded-2xl border border-brand-teal/25 bg-brand-teal/10 px-4 py-3.5">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-teal/20 text-brand-navy dark:text-brand-teal">
         <Check className="size-5" strokeWidth={3} />
       </div>
       <div>
@@ -1356,7 +1324,7 @@ function TakeoverDivider({ name }: { name: string }) {
     <div className="flex items-center gap-2 py-1">
       <div className="h-px flex-1 bg-border" />
       <span className="flex items-center gap-1 text-[11px] whitespace-nowrap text-muted-foreground">
-        <Zap className="size-3 text-rose-500" /> {name} joined the conversation
+        {name} joined the conversation
       </span>
       <div className="h-px flex-1 bg-border" />
     </div>
@@ -1376,11 +1344,11 @@ function LiveMessageRow({
         <div className="max-w-[85%]">
           <div className="mb-1 flex items-center justify-end gap-1.5 text-xs">
             <span className="text-muted-foreground">Live Agent</span>
-            <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+            <span className="font-semibold text-brand-navy dark:text-brand-teal">
               {AGENT_NAME}
             </span>
           </div>
-          <div className="rounded-2xl rounded-tr-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground dark:border-indigo-900/60 dark:bg-indigo-950/30">
+          <div className="rounded-2xl rounded-tr-md border border-brand-navy/20 bg-brand-navy/8 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground">
             {message.text}
           </div>
         </div>
@@ -1395,14 +1363,14 @@ function LiveMessageRow({
         </span>
       </div>
       <div className="flex items-end gap-2">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0a3a4a] text-[10px] font-bold text-white">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-navy text-[10px] font-bold text-white">
           {customer
             .split(" ")
             .map((w) => w[0])
             .slice(-2)
             .join("")}
         </div>
-        <div className="max-w-[26rem] rounded-2xl rounded-bl-md bg-[#0a3a4a] px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-white">
+        <div className="max-w-[26rem] rounded-2xl rounded-bl-md bg-brand-navy px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-white">
           {message.text}
         </div>
       </div>
