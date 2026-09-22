@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
+import { useCameraPreview } from "@/hooks/use-camera-preview"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
-import { ArrowLeft, Video, Phone, X, Send, Mic, Check, Circle } from "./icons"
+import { ArrowLeft, Video, Phone, X, Send, Mic, Check, Circle, ScanFace } from "./icons"
 
 /** Fake, incrementing clock for the demo — starts at 10:23 AM, +1 min per bubble. */
 function timeFor(i: number) {
@@ -103,7 +104,13 @@ export function WhatsAppChat({
             <WhatsAppTurn key={i} turn={turn} time={timeFor(i)} verdicts={verdicts} onClassify={classify} />
           ))}
 
-          {typing && (
+          {typing && pending?.kind === "faceid" && (
+            <div className="flex justify-start">
+              <FaceIdScan />
+            </div>
+          )}
+
+          {typing && pending?.kind !== "faceid" && (
             <div className="flex justify-start">
               <div className="flex items-center gap-1 rounded-lg rounded-tl-sm bg-white px-3 py-2.5 shadow-sm dark:bg-[#202c33]">
                 {[0, 1, 2].map((i) => (
@@ -355,6 +362,29 @@ function WhatsAppTurn({
         </Card>
       )
   }
+}
+
+function FaceIdScan() {
+  const { videoRef, status } = useCameraPreview()
+  return (
+    <div className="flex items-center gap-2 rounded-lg rounded-tl-sm bg-white px-3 py-2.5 shadow-sm dark:bg-[#202c33]">
+      <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black">
+        {status === "ready" ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="size-full scale-150 object-cover transform-[scaleX(-1)]"
+          />
+        ) : (
+          <ScanFace className="relative size-4 text-emerald-300" />
+        )}
+        <span className="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-emerald-400/70" />
+      </div>
+      <span className="text-xs text-muted-foreground">Scanning Face ID…</span>
+    </div>
+  )
 }
 
 function Bubble({ side, time, children }: { side: "in" | "out"; time: string; children: React.ReactNode }) {

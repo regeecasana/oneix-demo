@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import type { LiveMessage } from "@/lib/oneix/live-chat"
 import { useChatScript } from "@/hooks/use-chat-script"
+import { useCameraPreview } from "@/hooks/use-camera-preview"
 import { X, ShieldAlert, ScanFace, ShieldCheck, Check, Circle, Send } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
@@ -40,11 +41,22 @@ function TypingDots() {
 }
 
 function FaceIdScan() {
+  const { videoRef, status } = useCameraPreview()
   return (
     <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2.5">
-      <div className="relative flex size-5 shrink-0 items-center justify-center">
-        <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal-400/60" />
-        <ScanFace className="relative size-4 text-teal-600 dark:text-teal-400" />
+      <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black">
+        {status === "ready" ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="size-full scale-150 object-cover transform-[scaleX(-1)]"
+          />
+        ) : (
+          <ScanFace className="relative size-4 text-teal-300" />
+        )}
+        <span className="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-teal-400/70" />
       </div>
       <span className="text-xs text-muted-foreground">Scanning Face ID…</span>
     </div>

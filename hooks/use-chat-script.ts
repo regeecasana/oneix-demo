@@ -128,7 +128,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     const delay = isMessage
       ? 700 + Math.min(pending.text.length * 12, 1100)
       : isFaceId
-        ? 1600
+        ? 2600
         : isChecklist
           ? 1200
           : 500
