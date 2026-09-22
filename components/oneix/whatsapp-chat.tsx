@@ -49,6 +49,7 @@ export function WhatsAppChat({
     verdicts,
     classify,
     liveHandoff,
+    awaitingAgent,
     liveMessages,
     sendLiveMessage,
   } = useChatScript(scenarioId, script)
@@ -129,6 +130,16 @@ export function WhatsAppChat({
             </>
           )}
 
+          {awaitingAgent && (
+            <div className="mx-auto flex w-fit items-center gap-1.5 rounded-md bg-black/10 px-2.5 py-1 text-[11px] text-muted-foreground dark:bg-white/10">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500/70" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-600" />
+              </span>
+              Waiting for a live agent to join…
+            </div>
+          )}
+
           {conversationEnded && (
             <div className="pt-1 text-center text-[11px] text-muted-foreground">Conversation ended</div>
           )}
@@ -167,7 +178,7 @@ export function WhatsAppChat({
             </button>
           ) : (
             <div className="flex-1 truncate rounded-full bg-white px-4 py-2 text-sm text-muted-foreground shadow-sm dark:bg-[#2a3942]">
-              Message
+              {awaitingAgent ? "Waiting for a live agent…" : "Message"}
             </div>
           )}
           {liveHandoff ? (

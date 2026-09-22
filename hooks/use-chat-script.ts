@@ -53,6 +53,16 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const live = useLiveChat(sessionId)
   const liveHandoff = live.owner === "agent"
 
+  // The scripted "Jordan" dialogue after a handoff is retired — once the
+  // handoff turn itself has played, the script pauses there and waits for an
+  // actual agent to accept in the Agent Workspace instead of auto-playing.
+  const handoffIndex = useMemo(
+    () => script.findIndex((t) => t.kind === "handoff"),
+    [script]
+  )
+  const awaitingAgent =
+    handoffIndex >= 0 && index > handoffIndex && !liveHandoff
+
   // Mirror progress to the Agent Workspace (/agent), which may be on another device.
   // A human takeover does NOT end the session here -- the customer is still
   // actively chatting, just with an agent instead of the script, so the
@@ -71,7 +81,12 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     setActiveSpeaker({ name: AGENT_NAME, tone: "agent" })
   }, [liveHandoff])
 
-  const pending = liveHandoff ? null : index < script.length ? script[index] : null
+  const pending =
+    liveHandoff || awaitingAgent
+      ? null
+      : index < script.length
+        ? script[index]
+        : null
   const awaitingReply = pending?.kind === "reply"
   // Who the typing indicator's avatar should show — the *pending* turn's
   // speaker if it has one, so it doesn't lag a turn behind on a handoff.
@@ -164,11 +179,13 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     activeAgentTone: activeSpeaker.tone,
     typingAgentName: typingSpeaker.name,
     typingAgentTone: typingSpeaker.tone,
-    conversationEnded: !liveHandoff && !pending && rendered.length > 0,
+    conversationEnded:
+      !liveHandoff && !awaitingAgent && !pending && rendered.length > 0,
     sendReply,
     onAudioStart,
     onAudioComplete,
     liveHandoff,
+    awaitingAgent,
     liveMessages: live.messages,
     sendLiveMessage: (text: string) => live.send("customer", text),
     verdicts,

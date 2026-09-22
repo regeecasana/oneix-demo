@@ -235,28 +235,6 @@ export function AgentWorkspace() {
               />
             ))}
           </div>
-
-          <div className="grid grid-cols-3 border-t border-border py-3 text-center">
-            <Stat
-              value={
-                cases.filter(
-                  (c) => !c.resolvedByAi && !accepted.has(c.scenarioId)
-                ).length
-              }
-              label="Waiting"
-              className="text-orange-500"
-            />
-            <Stat
-              value={cases.length}
-              label="AI Active"
-              className="text-teal-600 dark:text-teal-400"
-            />
-            <Stat
-              value={accepted.size}
-              label="Handoff"
-              className="text-rose-500"
-            />
-          </div>
         </aside>
 
         <main className="flex min-h-[520px] min-w-0 flex-col lg:min-h-0">
@@ -312,7 +290,11 @@ export function AgentWorkspace() {
               <>
                 <TakeoverDivider name={AGENT_NAME} />
                 {chat.messages.map((m) => (
-                  <LiveMessageRow key={m.id} message={m} customer={item.customer} />
+                  <LiveMessageRow
+                    key={m.id}
+                    message={m}
+                    customer={item.customer}
+                  />
                 ))}
               </>
             )}
@@ -1093,7 +1075,9 @@ function TranscriptTurn({
     case "message": {
       const live = turn.from === "agent"
       return (
-        <div className={cn("flex flex-col", live ? "items-end" : "items-start")}>
+        <div
+          className={cn("flex flex-col", live ? "items-end" : "items-start")}
+        >
           <div className="max-w-[85%]">
             {live ? (
               <div className="mb-1 flex items-center justify-end gap-1.5 text-xs">

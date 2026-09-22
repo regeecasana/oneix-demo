@@ -98,6 +98,7 @@ export function ChatWidget({
     verdicts,
     classify,
     liveHandoff,
+    awaitingAgent,
     liveMessages,
     sendLiveMessage,
   } = useChatScript(scenarioId, script)
@@ -171,6 +172,17 @@ export function ChatWidget({
             ))}
           </>
         )}
+        {awaitingAgent && (
+          <div className="flex justify-center py-1">
+            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[11px] text-muted-foreground">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-indigo-400/70" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-indigo-500" />
+              </span>
+              Waiting for a live agent to join…
+            </div>
+          </div>
+        )}
         {conversationEnded && (
           <div className="pt-1 text-center text-[11px] text-muted-foreground">Conversation ended</div>
         )}
@@ -217,7 +229,11 @@ export function ChatWidget({
           )
         ) : (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            {pending ? "Waiting for response…" : title}
+            {awaitingAgent
+              ? "Waiting for a live agent…"
+              : pending
+                ? "Waiting for response…"
+                : title}
           </div>
         )}
         <p className="mt-2 text-center text-[10px] text-muted-foreground">Orchestrated by oneix</p>
