@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
@@ -18,6 +18,10 @@ function timeFor(i: number) {
   return `${h12}:${String(m).padStart(2, "0")} ${h24 >= 12 ? "PM" : "AM"}`
 }
 
+function timeOf(ts: number) {
+  return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+}
+
 export function WhatsAppChat({
   scenarioId,
   script,
@@ -28,6 +32,7 @@ export function WhatsAppChat({
   onClose: () => void
 }) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const [draft, setDraft] = useState("")
   const {
     rendered,
     pending,
@@ -43,11 +48,20 @@ export function WhatsAppChat({
     onAudioComplete,
     verdicts,
     classify,
+    liveHandoff,
+    liveMessages,
+    sendLiveMessage,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [rendered, typing])
+  }, [rendered, typing, liveMessages])
+
+  function submitDraft() {
+    if (!draft.trim()) return
+    sendLiveMessage(draft)
+    setDraft("")
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -102,6 +116,19 @@ export function WhatsAppChat({
             </div>
           )}
 
+          {liveHandoff && (
+            <>
+              <div className="mx-auto w-fit rounded-md bg-black/10 px-2.5 py-1 text-center text-[11px] text-muted-foreground dark:bg-white/10">
+                {activeAgentName} joined the conversation
+              </div>
+              {liveMessages.map((m) => (
+                <Bubble key={m.id} side={m.from === "agent" ? "in" : "out"} time={timeOf(m.ts)}>
+                  {m.text}
+                </Bubble>
+              ))}
+            </>
+          )}
+
           {conversationEnded && (
             <div className="pt-1 text-center text-[11px] text-muted-foreground">Conversation ended</div>
           )}
@@ -112,7 +139,7 @@ export function WhatsAppChat({
           <TurnAudioPlayer key={pending!.id} clips={batch.clips} onStart={onAudioStart} onComplete={onAudioComplete} />
         )}
 
-        {readyToReply && pending?.kind === "reply" && pending.choices && (
+        {!liveHandoff && readyToReply && pending?.kind === "reply" && pending.choices && (
           <div className="border-t border-black/5 bg-[#f7f7f7] px-3 pt-2.5 pb-1 dark:border-white/5 dark:bg-[#111b21]">
             <ReplyChoices
               choices={pending.choices}
@@ -123,7 +150,15 @@ export function WhatsAppChat({
         )}
 
         <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2.5 dark:bg-[#1f2c34]">
-          {readyToReply && pending?.kind === "reply" && !pending.choices ? (
+          {liveHandoff ? (
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitDraft()}
+              placeholder="Type a message"
+              className="flex-1 rounded-full bg-white px-4 py-2 text-sm text-foreground shadow-sm outline-none dark:bg-[#2a3942]"
+            />
+          ) : readyToReply && pending?.kind === "reply" && !pending.choices ? (
             <button
               onClick={sendReply}
               className="flex-1 truncate rounded-full border border-emerald-300 bg-white px-4 py-2 text-left text-sm text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
@@ -135,10 +170,23 @@ export function WhatsAppChat({
               Message
             </div>
           )}
-          <Send className="size-5 shrink-0 text-muted-foreground/60" />
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#00a884] text-white">
-            <Mic className="size-4" />
-          </div>
+          {liveHandoff ? (
+            <button
+              onClick={submitDraft}
+              disabled={!draft.trim()}
+              aria-label="Send"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#00a884] text-white transition-opacity disabled:opacity-40"
+            >
+              <Send className="size-4" />
+            </button>
+          ) : (
+            <>
+              <Send className="size-5 shrink-0 text-muted-foreground/60" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#00a884] text-white">
+                <Mic className="size-4" />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

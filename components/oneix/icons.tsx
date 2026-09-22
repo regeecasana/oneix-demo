@@ -28,6 +28,7 @@ import {
   Workflow,
   BrainCircuit,
   ChevronDown,
+  Zap,
 } from "lucide-react"
 import type { IndustryDef } from "@/lib/oneix/types"
 
@@ -64,4 +65,5 @@ export {
   Workflow,
   BrainCircuit,
   ChevronDown,
+  Zap,
 }

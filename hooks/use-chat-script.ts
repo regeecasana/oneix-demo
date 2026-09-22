@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react"
 import type { AudioBatch } from "@/lib/oneix/get-audio-batch"
 import { getAudioBatch } from "@/lib/oneix/get-audio-batch"
 import { audioMap } from "@/lib/oneix/audio-map"
-import { useSessionPublisher } from "./use-session-publisher"
+import { newSessionId, useSessionPublisher } from "./use-session-publisher"
+import { useLiveChat } from "./use-live-chat"
+import { AGENT_NAME } from "@/lib/oneix/live-chat"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 
 /**
@@ -34,6 +36,7 @@ function speakerFor(turn: ChatTurn): ActiveSpeaker | null {
 }
 
 export function useChatScript(scenarioId: string, script: ChatTurn[]) {
+  const [sessionId] = useState(newSessionId)
   const [rendered, setRendered] = useState<ChatTurn[]>([])
   const [index, setIndex] = useState(0)
   const [typing, setTyping] = useState(false)
@@ -43,15 +46,32 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   })
   const [verdicts, setVerdicts] = useState<Record<string, TxnVerdict>>({})
 
+  // A human agent can take this conversation over at any point — from the
+  // scripted handoff, or mid-AI via the Agent Workspace's Takeover button.
+  // Once that happens the scripted engine below freezes and the transcript
+  // continues as a real two-way exchange instead.
+  const live = useLiveChat(sessionId)
+  const liveHandoff = live.owner === "agent"
+
   // Mirror progress to the Agent Workspace (/agent), which may be on another device.
+  // A human takeover does NOT end the session here -- the customer is still
+  // actively chatting, just with an agent instead of the script, so the
+  // workspace needs to keep treating it as live.
   useSessionPublisher(
+    sessionId,
     scenarioId,
     rendered.length,
     typing,
-    rendered.length > 0 && rendered.length >= script.length
+    !liveHandoff && rendered.length > 0 && rendered.length >= script.length
   )
 
-  const pending = index < script.length ? script[index] : null
+  useEffect(() => {
+    if (!liveHandoff) return
+    setTyping(false)
+    setActiveSpeaker({ name: AGENT_NAME, tone: "agent" })
+  }, [liveHandoff])
+
+  const pending = liveHandoff ? null : index < script.length ? script[index] : null
   const awaitingReply = pending?.kind === "reply"
   // Who the typing indicator's avatar should show — the *pending* turn's
   // speaker if it has one, so it doesn't lag a turn behind on a handoff.
@@ -107,8 +127,10 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
       setIndex((i) => i + 1)
     }, delay)
     return () => clearTimeout(t)
+    // Also re-run (and so cancel any in-flight timer) the instant a takeover
+    // happens mid-turn, so a scripted bubble can't sneak in after a human joins.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index])
+  }, [index, liveHandoff])
 
   function sendReply() {
     if (!pending || pending.kind !== "reply" || requiresClassification) return
@@ -142,10 +164,13 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     activeAgentTone: activeSpeaker.tone,
     typingAgentName: typingSpeaker.name,
     typingAgentTone: typingSpeaker.tone,
-    conversationEnded: !pending && rendered.length > 0,
+    conversationEnded: !liveHandoff && !pending && rendered.length > 0,
     sendReply,
     onAudioStart,
     onAudioComplete,
+    liveHandoff,
+    liveMessages: live.messages,
+    sendLiveMessage: (text: string) => live.send("customer", text),
     verdicts,
     classify,
   }

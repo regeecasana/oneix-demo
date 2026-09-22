@@ -6,7 +6,9 @@ import { scriptsByScenario } from "@/lib/oneix/scripts"
 import { caseFiles } from "@/lib/oneix/cases"
 import { industries } from "@/lib/oneix/industries"
 import { useLiveSession } from "@/hooks/use-live-session"
+import { useLiveChat } from "@/hooks/use-live-chat"
 import { LIVE_WINDOW_MS } from "@/lib/oneix/live-session"
+import { AGENT_NAME, type LiveMessage } from "@/lib/oneix/live-chat"
 import type {
   CaseFile,
   CaseStep,
@@ -25,6 +27,7 @@ import {
   Workflow,
   BrainCircuit,
   ChevronDown,
+  Zap,
 } from "./icons"
 import { ThemeToggle } from "./theme-toggle"
 
@@ -34,7 +37,6 @@ const SYSTEMS: CaseSystem[] = [
   "Marketing",
   "AI Orchestrator",
 ]
-const AGENT_NAME = "Jordan"
 
 const SCENARIOS = industries.flatMap((i) => i.scenarios)
 const directionOf = (scenarioId: string) =>
@@ -60,6 +62,7 @@ export function AgentWorkspace() {
     caseId: string
     index: number
   } | null>(null)
+  const [draft, setDraft] = useState("")
   const endRef = useRef<HTMLDivElement>(null)
 
   const liveSession =
@@ -90,6 +93,12 @@ export function AgentWorkspace() {
   const isAccepted = accepted.has(selectedId)
   const isLive = selectedId === liveCaseId
 
+  // A human agent can take a live conversation over from Ava at any point --
+  // via Accept once the scripted handoff is reached, or Takeover mid-AI. Once
+  // taken, it becomes a real two-way exchange instead of the scripted lines.
+  const chat = useLiveChat(isLive ? liveSession!.sessionId : null)
+  const liveHandoffActive = isLive && chat.owner === "agent"
+
   const script = scriptsByScenario[selectedId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
   const hasHandoff = handoffAt >= 0
@@ -115,21 +124,23 @@ export function AgentWorkspace() {
         isLive && direction === "outbound" ? 2 : 0
       )
 
-  const statusLabel = isAccepted
-    ? `Owned by ${AGENT_NAME}`
-    : notified
-      ? "Live · Notification sent"
-      : isLive && !aiDone
-        ? "Live · Ava is handling"
-        : item.resolvedByAi
-          ? "Resolved by AI"
-          : "Awaiting agent"
+  const statusLabel = liveHandoffActive
+    ? `Live · You're chatting`
+    : isAccepted
+      ? `Owned by ${AGENT_NAME}`
+      : notified
+        ? "Live · Notification sent"
+        : isLive && !aiDone
+          ? "Live · Ava is handling"
+          : item.resolvedByAi
+            ? "Resolved by AI"
+            : "Awaiting agent"
 
   const doneSteps: CaseStep[] = item.steps.slice(0, stepsShown)
   const steps: CaseStep[] = isAccepted
     ? [
         ...doneSteps,
-        { system: "CDP", label: `Handoff accepted by ${AGENT_NAME}` },
+        { system: "CDP", label: `${AGENT_NAME} took over the conversation` },
       ]
     : doneSteps
   // Live, the header follows the AI's latest step like a stepper. On a finished
@@ -159,11 +170,25 @@ export function AgentWorkspace() {
   useEffect(() => {
     if (isLive)
       endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
-  }, [isLive, revealed, liveSession?.typing, selectedId, isAccepted])
+  }, [
+    isLive,
+    revealed,
+    liveSession?.typing,
+    selectedId,
+    isAccepted,
+    chat.messages.length,
+  ])
 
   function accept() {
     setAccepted((prev) => new Set(prev).add(selectedId))
     setTab("handoff")
+    if (isLive) chat.takeover()
+  }
+
+  function submitDraft() {
+    if (!draft.trim()) return
+    chat.send("agent", draft)
+    setDraft("")
   }
 
   return (
@@ -214,7 +239,9 @@ export function AgentWorkspace() {
           <div className="grid grid-cols-3 border-t border-border py-3 text-center">
             <Stat
               value={
-                cases.filter((c) => !c.resolvedByAi).length - accepted.size
+                cases.filter(
+                  (c) => !c.resolvedByAi && !accepted.has(c.scenarioId)
+                ).length
               }
               label="Waiting"
               className="text-orange-500"
@@ -239,6 +266,8 @@ export function AgentWorkspace() {
             statusLabel={statusLabel}
             live={isLive}
             direction={direction}
+            canTakeover={isLive && !liveHandoffActive}
+            onTakeover={accept}
           />
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
@@ -258,6 +287,7 @@ export function AgentWorkspace() {
             ))}
 
             {aiDone &&
+              !liveHandoffActive &&
               (hasHandoff ? (
                 <HandoffCard
                   note={item.handoffNote}
@@ -278,22 +308,42 @@ export function AgentWorkspace() {
                 />
               ))}
 
-            {nextTurn && <TypingRow turn={nextTurn} />}
+            {liveHandoffActive && (
+              <>
+                <TakeoverDivider name={AGENT_NAME} />
+                {chat.messages.map((m) => (
+                  <LiveMessageRow key={m.id} message={m} customer={item.customer} />
+                ))}
+              </>
+            )}
+
+            {!liveHandoffActive && nextTurn && <TypingRow turn={nextTurn} />}
             <div ref={endRef} />
           </div>
 
           <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-3">
-            <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
-              {item.resolvedByAi
-                ? "Resolved by AI — no reply needed"
-                : isAccepted
-                  ? "Type a message"
-                  : "Accept the handoff to reply"}
-            </div>
+            {liveHandoffActive ? (
+              <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitDraft()}
+                placeholder="Type a message"
+                className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-teal-400"
+              />
+            ) : (
+              <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
+                {item.resolvedByAi
+                  ? "Resolved by AI — no reply needed"
+                  : isAccepted
+                    ? "Type a message"
+                    : "Accept the handoff to reply"}
+              </div>
+            )}
             <button
-              disabled
+              onClick={liveHandoffActive ? submitDraft : undefined}
+              disabled={!liveHandoffActive || !draft.trim()}
               aria-label="Send"
-              className="flex size-10 items-center justify-center rounded-xl bg-teal-700 text-white opacity-60"
+              className="flex size-10 items-center justify-center rounded-xl bg-teal-700 text-white transition-colors hover:bg-teal-800 disabled:opacity-40"
             >
               <ArrowUp className="size-4" />
             </button>
@@ -569,12 +619,16 @@ function TicketHeader({
   statusLabel,
   live,
   direction,
+  canTakeover,
+  onTakeover,
 }: {
   item: CaseFile
   accepted: boolean
   statusLabel: string
   live: boolean
   direction: "inbound" | "outbound"
+  canTakeover: boolean
+  onTakeover: () => void
 }) {
   return (
     <div className="border-b border-border bg-card px-4 py-4 sm:px-6">
@@ -613,6 +667,14 @@ function TicketHeader({
           {statusLabel}
         </span>
         {live && <LivePill />}
+        {canTakeover && (
+          <button
+            onClick={onTakeover}
+            className="flex items-center gap-1 rounded-full bg-rose-600 px-3 py-1 text-[11px] font-bold tracking-wider text-white uppercase transition-colors hover:bg-rose-700"
+          >
+            <Zap className="size-3" /> Takeover
+          </button>
+        )}
       </div>
     </div>
   )
@@ -1031,29 +1093,31 @@ function TranscriptTurn({
     case "message": {
       const live = turn.from === "agent"
       return (
-        <div className="max-w-[85%]">
-          {live ? (
-            <div className="mb-1 flex items-center gap-1.5 text-xs">
-              <span className="font-semibold text-indigo-700 dark:text-indigo-300">
-                {turn.speaker}
-              </span>
-              <span className="text-muted-foreground">Live Agent</span>
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {time} AM
-              </span>
-            </div>
-          ) : (
-            <AiLabel time={time} />
-          )}
-          <div
-            className={cn(
-              "rounded-2xl rounded-tl-md border px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground",
-              live
-                ? "border-indigo-200 bg-indigo-50 dark:border-indigo-900/60 dark:bg-indigo-950/30"
-                : "border-teal-200 bg-teal-50 dark:border-teal-900/60 dark:bg-teal-950/30"
+        <div className={cn("flex flex-col", live ? "items-end" : "items-start")}>
+          <div className="max-w-[85%]">
+            {live ? (
+              <div className="mb-1 flex items-center justify-end gap-1.5 text-xs">
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {time} AM
+                </span>
+                <span className="text-muted-foreground">Live Agent</span>
+                <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                  {turn.speaker}
+                </span>
+              </div>
+            ) : (
+              <AiLabel time={time} />
             )}
-          >
-            {turn.text}
+            <div
+              className={cn(
+                "rounded-2xl border px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground",
+                live
+                  ? "rounded-tr-md border-indigo-200 bg-indigo-50 dark:border-indigo-900/60 dark:bg-indigo-950/30"
+                  : "rounded-tl-md border-teal-200 bg-teal-50 dark:border-teal-900/60 dark:bg-teal-950/30"
+              )}
+            >
+              {turn.text}
+            </div>
           </div>
         </div>
       )
@@ -1090,25 +1154,25 @@ function TranscriptTurn({
       )
     case "reply":
       return (
-        <div className="flex flex-col items-end">
+        <div className="flex flex-col items-start">
           <div className="mb-1 flex items-center gap-1.5 text-xs">
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {time} AM
-            </span>
             <span className="font-semibold text-foreground">
               {customer.split(" ")[0]}
             </span>
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {time} AM
+            </span>
           </div>
           <div className="flex items-end gap-2">
-            <div className="max-w-[26rem] rounded-2xl rounded-br-md bg-[#0a3a4a] px-4 py-3 text-sm leading-relaxed text-white">
-              {turn.text}
-            </div>
             <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0a3a4a] text-[10px] font-bold text-white">
               {customer
                 .split(" ")
                 .map((w) => w[0])
                 .slice(-2)
                 .join("")}
+            </div>
+            <div className="max-w-[26rem] rounded-2xl rounded-bl-md bg-[#0a3a4a] px-4 py-3 text-sm leading-relaxed text-white">
+              {turn.text}
             </div>
           </div>
         </div>
@@ -1298,6 +1362,65 @@ function ResolvedCard({ note }: { note: string }) {
           Resolved by AI
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{note}</p>
+      </div>
+    </div>
+  )
+}
+
+function TakeoverDivider({ name }: { name: string }) {
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <div className="h-px flex-1 bg-border" />
+      <span className="flex items-center gap-1 text-[11px] whitespace-nowrap text-muted-foreground">
+        <Zap className="size-3 text-rose-500" /> {name} joined the conversation
+      </span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  )
+}
+
+function LiveMessageRow({
+  message,
+  customer,
+}: {
+  message: LiveMessage
+  customer: string
+}) {
+  if (message.from === "agent") {
+    return (
+      <div className="flex flex-col items-end">
+        <div className="max-w-[85%]">
+          <div className="mb-1 flex items-center justify-end gap-1.5 text-xs">
+            <span className="text-muted-foreground">Live Agent</span>
+            <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+              {AGENT_NAME}
+            </span>
+          </div>
+          <div className="rounded-2xl rounded-tr-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground dark:border-indigo-900/60 dark:bg-indigo-950/30">
+            {message.text}
+          </div>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="flex flex-col items-start">
+      <div className="mb-1 flex items-center gap-1.5 text-xs">
+        <span className="font-semibold text-foreground">
+          {customer.split(" ")[0]}
+        </span>
+      </div>
+      <div className="flex items-end gap-2">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0a3a4a] text-[10px] font-bold text-white">
+          {customer
+            .split(" ")
+            .map((w) => w[0])
+            .slice(-2)
+            .join("")}
+        </div>
+        <div className="max-w-[26rem] rounded-2xl rounded-bl-md bg-[#0a3a4a] px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-white">
+          {message.text}
+        </div>
       </div>
     </div>
   )

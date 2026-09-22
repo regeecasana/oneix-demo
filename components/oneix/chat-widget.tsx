@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
+import type { LiveMessage } from "@/lib/oneix/live-chat"
 import { useChatScript } from "@/hooks/use-chat-script"
-import { X, ShieldAlert, ScanFace, ShieldCheck, Check, Circle } from "./icons"
+import { X, ShieldAlert, ScanFace, ShieldCheck, Check, Circle, Send } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
@@ -78,6 +79,7 @@ export function ChatWidget({
   onClose: () => void
 }) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const [draft, setDraft] = useState("")
   const {
     rendered,
     pending,
@@ -95,11 +97,20 @@ export function ChatWidget({
     onAudioComplete,
     verdicts,
     classify,
+    liveHandoff,
+    liveMessages,
+    sendLiveMessage,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [rendered, typing])
+  }, [rendered, typing, liveMessages])
+
+  function submitDraft() {
+    if (!draft.trim()) return
+    sendLiveMessage(draft)
+    setDraft("")
+  }
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex h-[min(640px,calc(100vh-2rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
@@ -146,6 +157,20 @@ export function ChatWidget({
             <TypingDots />
           </div>
         )}
+        {liveHandoff && (
+          <>
+            <div className="flex items-center gap-2 py-1">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] whitespace-nowrap text-muted-foreground">
+                {activeAgentName} joined the conversation
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            {liveMessages.map((m) => (
+              <LiveBubble key={m.id} message={m} agentName={activeAgentName} />
+            ))}
+          </>
+        )}
         {conversationEnded && (
           <div className="pt-1 text-center text-[11px] text-muted-foreground">Conversation ended</div>
         )}
@@ -157,7 +182,25 @@ export function ChatWidget({
       )}
 
       <div className="border-t border-border px-4 py-3">
-        {readyToReply && pending?.kind === "reply" ? (
+        {liveHandoff ? (
+          <div className="flex items-center gap-2">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitDraft()}
+              placeholder="Type a message"
+              className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-teal-400"
+            />
+            <button
+              onClick={submitDraft}
+              disabled={!draft.trim()}
+              aria-label="Send"
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white transition-colors hover:bg-teal-800 disabled:opacity-40"
+            >
+              <Send className="size-4" />
+            </button>
+          </div>
+        ) : readyToReply && pending?.kind === "reply" ? (
           pending.choices ? (
             <ReplyChoices
               choices={pending.choices}
@@ -178,6 +221,29 @@ export function ChatWidget({
           </div>
         )}
         <p className="mt-2 text-center text-[10px] text-muted-foreground">Orchestrated by oneix</p>
+      </div>
+    </div>
+  )
+}
+
+function LiveBubble({ message, agentName }: { message: LiveMessage; agentName: string }) {
+  if (message.from === "agent") {
+    return (
+      <div className="flex items-end gap-2">
+        <Avatar label={agentName[0]} tone="agent" />
+        <div>
+          <div className="mb-0.5 text-[10px] text-muted-foreground">{agentName}</div>
+          <div className="max-w-[260px] rounded-2xl rounded-bl-sm bg-indigo-50 px-3 py-2 text-sm leading-snug whitespace-pre-line text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-100">
+            {message.text}
+          </div>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="flex justify-end">
+      <div className="max-w-[260px] rounded-2xl rounded-br-sm bg-[#0a1520] px-3 py-2 text-sm leading-snug whitespace-pre-line text-white">
+        {message.text}
       </div>
     </div>
   )
