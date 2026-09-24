@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { scriptsByScenario } from "@/lib/oneix/scripts"
 import { caseFiles } from "@/lib/oneix/cases"
@@ -9,6 +9,7 @@ import { useLiveSession } from "@/hooks/use-live-session"
 import { useLiveChat } from "@/hooks/use-live-chat"
 import { LIVE_WINDOW_MS } from "@/lib/oneix/live-session"
 import { AGENT_NAME, type LiveMessage } from "@/lib/oneix/live-chat"
+import { postHandoffExchange } from "@/lib/oneix/post-handoff"
 import type {
   CaseFile,
   CaseStep,
@@ -64,6 +65,13 @@ export function AgentWorkspace() {
     index: number
   } | null>(null)
   const [draft, setDraft] = useState("")
+  // Demo mode: once a takeover happens, send the scripted Jordan lines as real
+  // live-chat messages automatically instead of requiring the booth operator
+  // to type them. On by default so an unattended demo still looks live. The
+  // customer's own scripted replies still need an actual click to send --
+  // same as it always worked for the AI portion -- so this only ever sends
+  // the agent's side.
+  const [autoRespond, setAutoRespond] = useState(true)
   const endRef = useRef<HTMLDivElement>(null)
 
   const liveSession =
@@ -103,6 +111,18 @@ export function AgentWorkspace() {
   const script = scriptsByScenario[selectedId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
   const hasHandoff = handoffAt >= 0
+  // The scripted Jordan/customer exchange that would have played after the
+  // handoff. `chat.messages.length` is how far the real live-chat exchange
+  // has actually progressed -- both sides read the same position off of it,
+  // so the agent side only ever sends when it's genuinely the agent's turn.
+  const cannedExchange = useMemo(() => postHandoffExchange(script), [script])
+  const nextExchangeTurn = liveHandoffActive
+    ? cannedExchange[chat.messages.length]
+    : undefined
+  const autoRespondActive =
+    liveHandoffActive && autoRespond && nextExchangeTurn?.from === "agent"
+  const awaitingCustomerReply =
+    liveHandoffActive && nextExchangeTurn?.from === "customer"
   const direction = directionOf(selectedId)
   const notified = isLive && liveSession!.stage === "notified"
   const revealed = isLive ? liveSession!.revealed : script.length
@@ -180,6 +200,19 @@ export function AgentWorkspace() {
     chat.messages.length,
   ])
 
+  // While Auto is on and it's genuinely the agent's turn, send that scripted
+  // line for real. Keyed on chat.messages.length (not a local counter) so it
+  // naturally waits out both network latency and the customer's own turns --
+  // it only ever re-fires once the exchange has actually moved forward.
+  useEffect(() => {
+    if (!autoRespondActive || !nextExchangeTurn) return
+    const t = setTimeout(() => {
+      chat.send("agent", nextExchangeTurn.text)
+    }, 1500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRespondActive, chat.messages.length])
+
   function accept() {
     setAccepted((prev) => new Set(prev).add(selectedId))
     setTab("handoff")
@@ -198,6 +231,8 @@ export function AgentWorkspace() {
         active={activeSystem}
         used={reachedSteps.map((st) => st.system)}
         relay={relay}
+        autoRespond={autoRespond}
+        onToggleAutoRespond={() => setAutoRespond((v) => !v)}
       />
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
@@ -305,7 +340,19 @@ export function AgentWorkspace() {
           </div>
 
           <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-3">
-            {liveHandoffActive ? (
+            {liveHandoffActive && autoRespondActive ? (
+              <div className="flex flex-1 items-center gap-2 rounded-xl border border-brand-teal/25 bg-brand-teal/10 px-4 py-2.5 text-sm text-brand-navy dark:text-brand-teal">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-teal/70" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-brand-teal" />
+                </span>
+                Sending {AGENT_NAME}&apos;s reply automatically…
+              </div>
+            ) : liveHandoffActive && awaitingCustomerReply ? (
+              <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
+                Waiting for {item.customer.split(" ")[0]} to reply…
+              </div>
+            ) : liveHandoffActive ? (
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -323,8 +370,17 @@ export function AgentWorkspace() {
               </div>
             )}
             <button
-              onClick={liveHandoffActive ? submitDraft : undefined}
-              disabled={!liveHandoffActive || !draft.trim()}
+              onClick={
+                liveHandoffActive && !autoRespondActive && !awaitingCustomerReply
+                  ? submitDraft
+                  : undefined
+              }
+              disabled={
+                !liveHandoffActive ||
+                autoRespondActive ||
+                awaitingCustomerReply ||
+                !draft.trim()
+              }
               aria-label="Send"
               className="flex size-10 items-center justify-center rounded-xl bg-brand-navy text-white transition-colors hover:bg-brand-navy/85 disabled:opacity-40"
             >
@@ -384,10 +440,14 @@ function WorkspaceHeader({
   active,
   used,
   relay,
+  autoRespond,
+  onToggleAutoRespond,
 }: {
   active: CaseSystem | null
   used: CaseSystem[]
   relay: ReturnType<typeof useLiveSession>
+  autoRespond: boolean
+  onToggleAutoRespond: () => void
 }) {
   return (
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-3 text-foreground dark:border-white/10 dark:bg-brand-navy dark:text-white">
@@ -442,6 +502,7 @@ function WorkspaceHeader({
 
       <div className="flex items-center gap-3">
         <RelayStatus relay={relay} />
+        <AutoRespondToggle enabled={autoRespond} onToggle={onToggleAutoRespond} />
         <ThemeToggle />
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-full bg-brand-navy text-sm font-bold text-white dark:bg-brand-teal dark:text-brand-navy">
@@ -456,6 +517,37 @@ function WorkspaceHeader({
         </div>
       </div>
     </header>
+  )
+}
+
+function AutoRespondToggle({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      title="When on, the live agent's scripted replies after a takeover are sent automatically instead of typed. The customer's scripted replies still need a click to send, same as they always did for the AI portion."
+      className="hidden items-center gap-2 text-[11px] font-medium text-muted-foreground sm:flex dark:text-white/70"
+    >
+      Auto
+      <span
+        className={cn(
+          "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+          enabled ? "bg-brand-teal" : "bg-muted-foreground/30 dark:bg-white/20"
+        )}
+      >
+        <span
+          className={cn(
+            "inline-block size-3.5 rounded-full bg-white shadow transition-transform",
+            enabled ? "translate-x-4.5" : "translate-x-0.5"
+          )}
+        />
+      </span>
+    </button>
   )
 }
 

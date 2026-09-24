@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import { useChatScript } from "@/hooks/use-chat-script"
-import { useCameraPreview } from "@/hooks/use-camera-preview"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
-import { ArrowLeft, Video, Phone, X, Send, Mic, Check, Circle, ScanFace } from "./icons"
+import { ArrowLeft, Video, Phone, X, Send, Mic, Check, Circle } from "./icons"
+import { FaceIdPanel } from "./faceid-panel"
 
 /** Fake, incrementing clock for the demo — starts at 10:23 AM, +1 min per bubble. */
 function timeFor(i: number) {
@@ -47,12 +47,15 @@ export function WhatsAppChat({
     sendReply,
     onAudioStart,
     onAudioComplete,
+    completeFaceId,
     verdicts,
     classify,
     liveHandoff,
     awaitingAgent,
     liveMessages,
     sendLiveMessage,
+    liveReadyToReply,
+    liveReplyTurn,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export function WhatsAppChat({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex h-[min(720px,calc(100vh-2rem))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[1.75rem] border border-black/10 bg-[#ece5dd] shadow-2xl dark:border-white/10 dark:bg-[#0b141a]">
+      <div className="relative flex h-[min(720px,calc(100vh-2rem))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[1.75rem] border border-black/10 bg-[#ece5dd] shadow-2xl dark:border-white/10 dark:bg-[#0b141a]">
+        {pending?.kind === "faceid" && <FaceIdPanel onDone={completeFaceId} />}
         <div className="flex items-center gap-2 bg-[#075e54] px-3 py-3 text-white">
           <button onClick={onClose} className="rounded-full p-1 transition-colors hover:bg-white/10">
             <ArrowLeft className="size-5" />
@@ -103,12 +107,6 @@ export function WhatsAppChat({
           {rendered.map((turn, i) => (
             <WhatsAppTurn key={i} turn={turn} time={timeFor(i)} verdicts={verdicts} onClassify={classify} />
           ))}
-
-          {typing && pending?.kind === "faceid" && (
-            <div className="flex justify-start">
-              <FaceIdScan />
-            </div>
-          )}
 
           {typing && pending?.kind !== "faceid" && (
             <div className="flex justify-start">
@@ -167,8 +165,29 @@ export function WhatsAppChat({
           </div>
         )}
 
+        {liveHandoff && liveReadyToReply && liveReplyTurn?.choices && (
+          <div className="border-t border-black/5 bg-[#f7f7f7] px-3 pt-2.5 pb-1 dark:border-white/5 dark:bg-[#111b21]">
+            <ReplyChoices
+              choices={liveReplyTurn.choices}
+              activeClassName="border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
+              onSelect={() => sendLiveMessage(liveReplyTurn.text)}
+            />
+          </div>
+        )}
+
         <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2.5 dark:bg-[#1f2c34]">
-          {liveHandoff ? (
+          {liveHandoff && liveReadyToReply && liveReplyTurn && !liveReplyTurn.choices ? (
+            <button
+              onClick={() => sendLiveMessage(liveReplyTurn.text)}
+              className="flex-1 truncate rounded-full border border-emerald-300 bg-white px-4 py-2 text-left text-sm text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
+            >
+              {liveReplyTurn.text}
+            </button>
+          ) : liveHandoff && liveReadyToReply ? (
+            <div className="flex-1 truncate rounded-full bg-white px-4 py-2 text-sm text-muted-foreground shadow-sm dark:bg-[#2a3942]">
+              Message
+            </div>
+          ) : liveHandoff ? (
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -190,8 +209,8 @@ export function WhatsAppChat({
           )}
           {liveHandoff ? (
             <button
-              onClick={submitDraft}
-              disabled={!draft.trim()}
+              onClick={liveReadyToReply ? undefined : submitDraft}
+              disabled={liveReadyToReply || !draft.trim()}
               aria-label="Send"
               className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#00a884] text-white transition-opacity disabled:opacity-40"
             >
@@ -362,29 +381,6 @@ function WhatsAppTurn({
         </Card>
       )
   }
-}
-
-function FaceIdScan() {
-  const { videoRef, status } = useCameraPreview()
-  return (
-    <div className="flex items-center gap-2 rounded-lg rounded-tl-sm bg-white px-3 py-2.5 shadow-sm dark:bg-[#202c33]">
-      <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black">
-        {status === "ready" ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="size-full scale-150 object-cover transform-[scaleX(-1)]"
-          />
-        ) : (
-          <ScanFace className="relative size-4 text-emerald-300" />
-        )}
-        <span className="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-emerald-400/70" />
-      </div>
-      <span className="text-xs text-muted-foreground">Scanning Face ID…</span>
-    </div>
-  )
 }
 
 function Bubble({ side, time, children }: { side: "in" | "out"; time: string; children: React.ReactNode }) {

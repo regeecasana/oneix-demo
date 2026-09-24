@@ -7,6 +7,7 @@ import { audioMap } from "@/lib/oneix/audio-map"
 import { newSessionId, useSessionPublisher } from "./use-session-publisher"
 import { useLiveChat } from "./use-live-chat"
 import { AGENT_NAME } from "@/lib/oneix/live-chat"
+import { postHandoffExchange } from "@/lib/oneix/post-handoff"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 
 /**
@@ -63,6 +64,14 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const awaitingAgent =
     handoffIndex >= 0 && index > handoffIndex && !liveHandoff
 
+  // Once live, the customer's turn in the scripted post-handoff exchange
+  // still needs an actual click to send -- same as it always worked for the
+  // AI portion -- rather than firing on its own. The agent's turns are the
+  // Agent Workspace's concern (typed for real, or auto-sent there).
+  const exchange = useMemo(() => postHandoffExchange(script), [script])
+  const nextExchangeTurn = liveHandoff ? exchange[live.messages.length] : undefined
+  const liveReadyToReply = nextExchangeTurn?.from === "customer"
+
   // Mirror progress to the Agent Workspace (/agent), which may be on another device.
   // A human takeover does NOT end the session here -- the customer is still
   // actively chatting, just with an agent instead of the script, so the
@@ -107,8 +116,13 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
 
   // Consecutive turns that share an audio `group` are the "sent together" bursts —
   // null here just means "this turn has no mapped clip, use the timed fallback".
+  // A "faceid" turn is excluded even if one is mapped -- it must complete when
+  // the camera panel says so, not whenever a clip happens to finish playing.
   const batch: AudioBatch | null = useMemo(
-    () => (pending ? getAudioBatch(audioMap, scenarioId, script, index) : null),
+    () =>
+      pending && pending.kind !== "faceid"
+        ? getAudioBatch(audioMap, scenarioId, script, index)
+        : null,
     [scenarioId, script, index, pending]
   )
 
@@ -122,18 +136,24 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
       return
     }
 
+    if (pending.kind === "faceid") {
+      // No blind timer here -- the camera panel (mounted by the caller) only
+      // calls completeFaceId once it has actually opened the camera and held
+      // the preview for a couple of seconds, so this can't silently "verify"
+      // without the camera ever having opened.
+      setTyping(true)
+      return
+    }
+
     const isMessage = pending.kind === "message"
-    const isFaceId = pending.kind === "faceid"
     const isChecklist = pending.kind === "checklist"
     const delay = isMessage
       ? 700 + Math.min(pending.text.length * 12, 1100)
-      : isFaceId
-        ? 2600
-        : isChecklist
-          ? 1200
-          : 500
+      : isChecklist
+        ? 1200
+        : 500
 
-    if (isMessage || isFaceId || isChecklist) setTyping(true)
+    if (isMessage || isChecklist) setTyping(true)
     const t = setTimeout(() => {
       setTyping(false)
       const speaker = speakerFor(pending)
@@ -168,6 +188,15 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     setIndex((i) => i + batch.turns.length)
   }
 
+  /** Called by the camera panel once it has actually shown a live preview and
+   * held it for its scan duration (or the operator dismissed it manually). */
+  function completeFaceId() {
+    if (!pending || pending.kind !== "faceid") return
+    setTyping(false)
+    setRendered((r) => [...r, pending])
+    setIndex((i) => i + 1)
+  }
+
   return {
     rendered,
     pending,
@@ -184,10 +213,13 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     sendReply,
     onAudioStart,
     onAudioComplete,
+    completeFaceId,
     liveHandoff,
     awaitingAgent,
     liveMessages: live.messages,
     sendLiveMessage: (text: string) => live.send("customer", text),
+    liveReadyToReply,
+    liveReplyTurn: nextExchangeTurn,
     verdicts,
     classify,
   }

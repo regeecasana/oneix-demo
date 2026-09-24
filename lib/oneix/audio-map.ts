@@ -24,8 +24,8 @@ export const audioMap: AudioMap = {
   fraud: {
     "fraud-ai-1": { src: "/audio/bfsi/fraud/ava/1.mp3" },
     "fraud-ai-2": { src: "/audio/bfsi/fraud/ava/2.mp3" },
-    // Short confirmation chime, not a spoken line.
-    "fraud-faceid-1": { src: DING },
+    // No entry for fraud-faceid-1: that turn is driven by the camera panel
+    // actually opening and holding the preview, not by a clip finishing.
     "fraud-ai-3": { src: "/audio/bfsi/fraud/ava/3.mp3" },
     "fraud-ai-4": { src: "/audio/bfsi/fraud/ava/4.mp3" },
     "fraud-ai-5": { src: "/audio/bfsi/fraud/ava/5.mp3" },

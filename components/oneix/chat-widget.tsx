@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import type { LiveMessage } from "@/lib/oneix/live-chat"
 import { useChatScript } from "@/hooks/use-chat-script"
-import { useCameraPreview } from "@/hooks/use-camera-preview"
-import { X, ShieldAlert, ScanFace, ShieldCheck, Check, Circle, Send } from "./icons"
+import { X, ShieldAlert, ShieldCheck, Check, Circle, Send } from "./icons"
 import { TurnAudioPlayer } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
+import { FaceIdPanel } from "./faceid-panel"
 
 function Avatar({ label, tone }: { label: string; tone: "ai" | "agent" | "customer" }) {
   return (
@@ -36,29 +36,6 @@ function TypingDots() {
           style={{ animationDelay: `${i * 120}ms` }}
         />
       ))}
-    </div>
-  )
-}
-
-function FaceIdScan() {
-  const { videoRef, status } = useCameraPreview()
-  return (
-    <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2.5">
-      <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black">
-        {status === "ready" ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="size-full scale-150 object-cover transform-[scaleX(-1)]"
-          />
-        ) : (
-          <ScanFace className="relative size-4 text-teal-300" />
-        )}
-        <span className="pointer-events-none absolute inset-0 animate-pulse rounded-full ring-2 ring-teal-400/70" />
-      </div>
-      <span className="text-xs text-muted-foreground">Scanning Face ID…</span>
     </div>
   )
 }
@@ -107,12 +84,15 @@ export function ChatWidget({
     sendReply,
     onAudioStart,
     onAudioComplete,
+    completeFaceId,
     verdicts,
     classify,
     liveHandoff,
     awaitingAgent,
     liveMessages,
     sendLiveMessage,
+    liveReadyToReply,
+    liveReplyTurn,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
@@ -127,6 +107,7 @@ export function ChatWidget({
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex h-[min(640px,calc(100vh-2rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+      {pending?.kind === "faceid" && <FaceIdPanel onDone={completeFaceId} />}
       <div className="flex items-start justify-between border-b border-border bg-linear-to-r from-[#0b1f26] to-[#0a1520] px-4 py-3">
         <div className="flex items-center gap-2.5">
           <Avatar label={activeAgentName[0]} tone={activeAgentTone} />
@@ -154,11 +135,6 @@ export function ChatWidget({
         {rendered.map((turn, i) => (
           <TurnView key={i} turn={turn} verdicts={verdicts} onClassify={classify} />
         ))}
-        {typing && pending?.kind === "faceid" && (
-          <div className="flex justify-center">
-            <FaceIdScan />
-          </div>
-        )}
         {typing && (pending?.kind === "system" || pending?.kind === "handoff") && (
           <div className="flex justify-center">
             <SystemPulse />
@@ -206,7 +182,22 @@ export function ChatWidget({
       )}
 
       <div className="border-t border-border px-4 py-3">
-        {liveHandoff ? (
+        {liveHandoff && liveReadyToReply && liveReplyTurn ? (
+          liveReplyTurn.choices ? (
+            <ReplyChoices
+              choices={liveReplyTurn.choices}
+              activeClassName="border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
+              onSelect={() => sendLiveMessage(liveReplyTurn.text)}
+            />
+          ) : (
+            <button
+              onClick={() => sendLiveMessage(liveReplyTurn.text)}
+              className="w-full rounded-xl border border-teal-300 bg-teal-50 px-3 py-2 text-left text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
+            >
+              {liveReplyTurn.text}
+            </button>
+          )
+        ) : liveHandoff ? (
           <div className="flex items-center gap-2">
             <input
               value={draft}
