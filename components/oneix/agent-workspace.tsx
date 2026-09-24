@@ -26,7 +26,6 @@ import {
   Sparkles,
   TriangleAlert,
   Workflow,
-  BrainCircuit,
   ChevronDown,
   Zap,
   Eye,
@@ -463,39 +462,47 @@ function WorkspaceHeader({
         </div>
       </div>
 
-      <div className="hidden items-center gap-2 md:flex">
-        {SYSTEMS.map((system) => {
+      <div className="hidden items-center md:flex">
+        {SYSTEMS.map((system, i) => {
           const on = active === system
           const done = !on && used.includes(system)
+          const last = i === SYSTEMS.length - 1
           return (
-            <span
-              key={system}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors duration-300",
-                on
-                  ? "border-brand-teal/50 bg-brand-teal/15 text-foreground dark:text-white"
-                  : done
-                    ? "border-brand-teal/25 text-muted-foreground dark:text-white/70"
-                    : "border-border text-muted-foreground/60 dark:border-white/10 dark:text-white/40"
-              )}
-            >
-              {done ? (
-                <Check
-                  className="size-3 text-brand-navy dark:text-brand-teal"
-                  strokeWidth={3}
-                />
-              ) : (
+            <div key={system} className="flex items-center">
+              <div className="flex items-center gap-1.5">
                 <span
                   className={cn(
-                    "size-1.5 rounded-full transition-colors duration-300",
+                    "flex size-5 shrink-0 items-center justify-center rounded-full transition-colors duration-300",
+                    on || done
+                      ? "bg-brand-navy text-white dark:bg-brand-teal dark:text-brand-navy"
+                      : "bg-brand-teal/15 dark:bg-white/10",
+                    on && "ring-2 ring-brand-teal/50"
+                  )}
+                >
+                  {(on || done) && <Check className="size-3" strokeWidth={3} />}
+                </span>
+                <span
+                  className={cn(
+                    "text-xs transition-colors duration-300",
                     on
-                      ? "animate-pulse bg-brand-teal"
-                      : "bg-muted-foreground/40 dark:bg-white/25"
+                      ? "font-semibold text-foreground dark:text-white"
+                      : done
+                        ? "text-muted-foreground dark:text-white/70"
+                        : "text-muted-foreground/50 dark:text-white/35"
+                  )}
+                >
+                  {system}
+                </span>
+              </div>
+              {!last && (
+                <span
+                  className={cn(
+                    "mx-2.5 h-px w-6 transition-colors duration-300",
+                    done ? "bg-brand-teal/50" : "bg-border dark:bg-white/15"
                   )}
                 />
               )}
-              {system}
-            </span>
+            </div>
           )
         })}
       </div>
@@ -962,33 +969,29 @@ function ProfileHeader({ item }: { item: CaseFile }) {
  */
 const SYSTEM_INFO: Record<
   CaseSystem,
-  { description: string; node: string; card: string; title: string }
+  { description: string; card: string; title: string }
 > = {
   "Data Warehouse": {
     description:
       "Every transaction, account, and system event lives in one place, so nothing downstream is ever working from stale or partial data.",
-    node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
   CDP: {
     description:
       "Unifies everything known about a customer into one live profile, so every conversation starts with full context instead of the customer repeating themselves.",
-    node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
   Marketing: {
     description:
       "Turns that context into action — reaching the right customer with the right message at the right moment, automatically.",
-    node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
   "AI Orchestrator": {
     description:
       "The decision-maker: understands what the customer needs, resolves it directly when it can, and hands off to a person with full context when it can't.",
-    node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
@@ -1047,18 +1050,12 @@ function OrchestrationPanel({
                 className={cn(
                   "relative z-10 mt-2 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-300",
                   active || done
-                    ? info.node
-                    : "border-2 border-border bg-card text-muted-foreground",
+                    ? "bg-brand-navy text-white"
+                    : "bg-brand-teal/25 text-brand-navy dark:text-brand-teal",
                   active && "ring-4 ring-brand-teal/25"
                 )}
               >
-                {active ? (
-                  <BrainCircuit className="size-4 animate-pulse" />
-                ) : done ? (
-                  <Check className="size-4" strokeWidth={3} />
-                ) : (
-                  <Circle className="size-3 opacity-40" />
-                )}
+                {(active || done) && <Check className="size-4" strokeWidth={3} />}
               </span>
 
               <div
