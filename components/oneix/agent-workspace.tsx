@@ -953,30 +953,41 @@ function ProfileHeader({ item }: { item: CaseFile }) {
   )
 }
 
+/**
+ * What each stage of the stack actually means for the business watching the
+ * demo — generalized, not tied to any one scenario's script, so it reads the
+ * same whether this ticket is a fraud case or a flight rebooking. The
+ * case-specific steps rendered below each of these are what ties it back to
+ * "here's what that meant for this interaction."
+ */
 const SYSTEM_INFO: Record<
   CaseSystem,
-  { subtitle: string; node: string; card: string; title: string }
+  { description: string; node: string; card: string; title: string }
 > = {
   "Data Warehouse": {
-    subtitle: "Enterprise data foundation",
+    description:
+      "Every transaction, account, and system event lives in one place, so nothing downstream is ever working from stale or partial data.",
     node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
   CDP: {
-    subtitle: "Customer data & full context",
+    description:
+      "Unifies everything known about a customer into one live profile, so every conversation starts with full context instead of the customer repeating themselves.",
     node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
   Marketing: {
-    subtitle: "Segmentation & journey orchestration",
+    description:
+      "Turns that context into action — reaching the right customer with the right message at the right moment, automatically.",
     node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
   },
   "AI Orchestrator": {
-    subtitle: "GenAI · Agentic AI · LLM reasoning",
+    description:
+      "The decision-maker: understands what the customer needs, resolves it directly when it can, and hands off to a person with full context when it can't.",
     node: "bg-brand-navy text-white",
     card: "border-brand-teal/25 bg-brand-teal/10",
     title: "text-brand-navy dark:text-brand-teal",
@@ -1008,8 +1019,8 @@ function OrchestrationPanel({
           Orchestration
         </h3>
         <p className="mt-1.5 text-[13px] leading-snug text-white/80">
-          Track how each technology contributes to this interaction in
-          real-time.
+          From raw data to a resolved conversation — see what each layer of
+          the stack does, and watch it happen here in real time.
         </p>
       </section>
 
@@ -1072,7 +1083,9 @@ function OrchestrationPanel({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">{info.subtitle}</p>
+                <p className="text-xs text-muted-foreground">
+                  {info.description}
+                </p>
 
                 {recent.length > 0 ? (
                   <ul className="mt-2 space-y-1">
