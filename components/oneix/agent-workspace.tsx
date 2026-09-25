@@ -389,9 +389,11 @@ export function AgentWorkspace() {
               <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
                 {item.resolvedByAi
                   ? "Resolved by AI — no reply needed"
-                  : isAccepted
-                    ? "Type a message"
-                    : "Accept the handoff to reply"}
+                  : isLive && isAccepted
+                    ? "Connecting…"
+                    : isAccepted
+                      ? "Handoff accepted"
+                      : "Accept the handoff to reply"}
               </div>
             )}
             <button

@@ -33,7 +33,11 @@ export function useLiveChat(sessionId: string | null) {
         if (!res.ok) return
         const json = (await res.json()) as { owner: ChatOwner; messages: LiveMessage[] }
         if (!stopped) {
-          setOwner(json.owner)
+          // The server-side owner only ever moves ai -> agent, never back --
+          // so if we already know it's "agent" (an optimistic takeover(), or
+          // an earlier poll), a poll racing against that takeover's still-
+          // in-flight POST can only be stale, never a real reversal. Ignore it.
+          setOwner((prev) => (prev === "agent" ? "agent" : json.owner))
           setMessages(json.messages)
         }
       } catch {
