@@ -54,8 +54,6 @@ export function WhatsAppChat({
     awaitingAgent,
     liveMessages,
     sendLiveMessage,
-    liveReadyToReply,
-    liveReplyTurn,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
@@ -165,29 +163,8 @@ export function WhatsAppChat({
           </div>
         )}
 
-        {liveHandoff && liveReadyToReply && liveReplyTurn?.choices && (
-          <div className="border-t border-black/5 bg-[#f7f7f7] px-3 pt-2.5 pb-1 dark:border-white/5 dark:bg-[#111b21]">
-            <ReplyChoices
-              choices={liveReplyTurn.choices}
-              activeClassName="border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
-              onSelect={() => sendLiveMessage(liveReplyTurn.text)}
-            />
-          </div>
-        )}
-
         <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2.5 dark:bg-[#1f2c34]">
-          {liveHandoff && liveReadyToReply && liveReplyTurn && !liveReplyTurn.choices ? (
-            <button
-              onClick={() => sendLiveMessage(liveReplyTurn.text)}
-              className="flex-1 truncate rounded-full border border-emerald-300 bg-white px-4 py-2 text-left text-sm text-emerald-800 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-[#2a3942] dark:text-emerald-200"
-            >
-              {liveReplyTurn.text}
-            </button>
-          ) : liveHandoff && liveReadyToReply ? (
-            <div className="flex-1 truncate rounded-full bg-white px-4 py-2 text-sm text-muted-foreground shadow-sm dark:bg-[#2a3942]">
-              Message
-            </div>
-          ) : liveHandoff ? (
+          {liveHandoff ? (
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -209,8 +186,8 @@ export function WhatsAppChat({
           )}
           {liveHandoff ? (
             <button
-              onClick={liveReadyToReply ? undefined : submitDraft}
-              disabled={liveReadyToReply || !draft.trim()}
+              onClick={submitDraft}
+              disabled={!draft.trim()}
               aria-label="Send"
               className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#00a884] text-white transition-opacity disabled:opacity-40"
             >

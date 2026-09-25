@@ -91,8 +91,6 @@ export function ChatWidget({
     awaitingAgent,
     liveMessages,
     sendLiveMessage,
-    liveReadyToReply,
-    liveReplyTurn,
   } = useChatScript(scenarioId, script)
 
   useEffect(() => {
@@ -182,22 +180,7 @@ export function ChatWidget({
       )}
 
       <div className="border-t border-border px-4 py-3">
-        {liveHandoff && liveReadyToReply && liveReplyTurn ? (
-          liveReplyTurn.choices ? (
-            <ReplyChoices
-              choices={liveReplyTurn.choices}
-              activeClassName="border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
-              onSelect={() => sendLiveMessage(liveReplyTurn.text)}
-            />
-          ) : (
-            <button
-              onClick={() => sendLiveMessage(liveReplyTurn.text)}
-              className="w-full rounded-xl border border-teal-300 bg-teal-50 px-3 py-2 text-left text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-950/70"
-            >
-              {liveReplyTurn.text}
-            </button>
-          )
-        ) : liveHandoff ? (
+        {liveHandoff ? (
           <div className="flex items-center gap-2">
             <input
               value={draft}

@@ -7,7 +7,6 @@ import { audioMap } from "@/lib/oneix/audio-map"
 import { newSessionId, useSessionPublisher } from "./use-session-publisher"
 import { useLiveChat } from "./use-live-chat"
 import { AGENT_NAME } from "@/lib/oneix/live-chat"
-import { postHandoffExchange } from "@/lib/oneix/post-handoff"
 import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 
 /**
@@ -63,14 +62,6 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   )
   const awaitingAgent =
     handoffIndex >= 0 && index > handoffIndex && !liveHandoff
-
-  // Once live, the customer's turn in the scripted post-handoff exchange
-  // still needs an actual click to send -- same as it always worked for the
-  // AI portion -- rather than firing on its own. The agent's turns are the
-  // Agent Workspace's concern (typed for real, or auto-sent there).
-  const exchange = useMemo(() => postHandoffExchange(script), [script])
-  const nextExchangeTurn = liveHandoff ? exchange[live.messages.length] : undefined
-  const liveReadyToReply = nextExchangeTurn?.from === "customer"
 
   // Mirror progress to the Agent Workspace (/agent), which may be on another device.
   // A human takeover does NOT end the session here -- the customer is still
@@ -218,8 +209,6 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     awaitingAgent,
     liveMessages: live.messages,
     sendLiveMessage: (text: string) => live.send("customer", text),
-    liveReadyToReply,
-    liveReplyTurn: nextExchangeTurn,
     verdicts,
     classify,
   }
