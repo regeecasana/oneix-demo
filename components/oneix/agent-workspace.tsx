@@ -43,6 +43,22 @@ const SCENARIOS = industries.flatMap((i) => i.scenarios)
 const directionOf = (scenarioId: string) =>
   SCENARIOS.find((sc) => sc.id === scenarioId)?.direction ?? "inbound"
 
+/** The last spoken line of a scenario's script, so the queue reads like a
+ * real inbox ("here's how it ended") instead of a static subject line. */
+function lastMessageOf(script: ChatTurn[]): string {
+  for (let i = script.length - 1; i >= 0; i--) {
+    const turn = script[i]
+    if (turn.kind === "message" || turn.kind === "reply") return turn.text
+  }
+  return ""
+}
+const LAST_MESSAGE: Record<string, string> = Object.fromEntries(
+  Object.entries(scriptsByScenario).map(([id, script]) => [
+    id,
+    lastMessageOf(script),
+  ])
+)
+
 /** Demo clock: the session starts at 10:41 AM and each step/message adds a minute. */
 function clock(offset: number) {
   const total = 10 * 60 + 41 + offset
@@ -54,7 +70,9 @@ function clock(offset: number) {
 export function AgentWorkspace() {
   const cases = Object.values(caseFiles)
   const relay = useLiveSession()
-  const [selectedId, setSelectedId] = useState(cases[0].scenarioId)
+  // Nothing is selected until a booth operator actually clicks a ticket --
+  // including a live one, which is only ever highlighted, never auto-opened.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [accepted, setAccepted] = useState<Set<string>>(new Set())
   const [tab, setTab] = useState<"ai" | "handoff">("ai")
   const [panel, setPanel] = useState<"summary" | "orchestration">("summary")
@@ -71,6 +89,10 @@ export function AgentWorkspace() {
   // same as it always worked for the AI portion -- so this only ever sends
   // the agent's side.
   const [autoRespond, setAutoRespond] = useState(true)
+  // How far a *static* ticket's full script has auto-played since it was
+  // opened -- reviewing an old ticket plays it back start to finish instead
+  // of dumping the whole transcript in at once.
+  const [replay, setReplay] = useState(0)
   const endRef = useRef<HTMLDivElement>(null)
 
   const liveSession =
@@ -83,12 +105,11 @@ export function AgentWorkspace() {
     liveSession && caseFiles[liveSession.scenarioId]
       ? liveSession.scenarioId
       : null
-  // A new customer demo just started: jump to its ticket, fresh and unaccepted.
+  // A new customer demo just started: mark its ticket fresh and unaccepted --
+  // it's highlighted as live in the queue, but left for the operator to open.
   if (liveSession && liveSession.sessionId !== seenSession) {
     setSeenSession(liveSession.sessionId)
     if (liveCaseId) {
-      setSelectedId(liveCaseId)
-      setTab("ai")
       setAccepted((prev) => {
         const next = new Set(prev)
         next.delete(liveCaseId)
@@ -97,9 +118,14 @@ export function AgentWorkspace() {
     }
   }
 
-  const item = caseFiles[selectedId]
-  const isAccepted = accepted.has(selectedId)
-  const isLive = selectedId === liveCaseId
+  // A safe stand-in for all the derived reads below when nothing is selected
+  // yet -- selectedId itself stays null so no ticket looks opened until the
+  // operator actually clicks one, and none of this (including the live-chat
+  // poll below) fires for a session nothing is actually showing.
+  const displayId = selectedId ?? cases[0].scenarioId
+  const item = caseFiles[displayId]
+  const isAccepted = accepted.has(displayId)
+  const isLive = displayId === liveCaseId
 
   // A human agent can take a live conversation over from Ava at any point --
   // via Accept once the scripted handoff is reached, or Takeover mid-AI. Once
@@ -107,7 +133,7 @@ export function AgentWorkspace() {
   const chat = useLiveChat(isLive ? liveSession!.sessionId : null)
   const liveHandoffActive = isLive && chat.owner === "agent"
 
-  const script = scriptsByScenario[selectedId]
+  const script = scriptsByScenario[displayId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
   const hasHandoff = handoffAt >= 0
   // The scripted Jordan/customer exchange that would have played after the
@@ -122,20 +148,26 @@ export function AgentWorkspace() {
     liveHandoffActive && autoRespond && nextExchangeTurn?.from === "agent"
   const awaitingCustomerReply =
     liveHandoffActive && nextExchangeTurn?.from === "customer"
-  const direction = directionOf(selectedId)
+  const direction = directionOf(displayId)
   const notified = isLive && liveSession!.stage === "notified"
-  const revealed = isLive ? liveSession!.revealed : script.length
+  // Live, progress comes from the customer's actual session. Static, it comes
+  // from the auto-playback below -- both just mean "how many turns in".
+  const replaying = !isLive && selectedId !== null && replay < script.length
+  const revealed = isLive
+    ? liveSession!.revealed
+    : selectedId === null
+      ? script.length
+      : replay
   // Where the AI's part of the conversation ends: at the handoff, or the end
   // of the script when the AI resolves everything itself.
   const aiEnd = hasHandoff ? handoffAt : script.length
-  const aiDone =
-    !isLive || revealed > aiEnd || (!hasHandoff && revealed >= aiEnd)
+  const aiDone = revealed > aiEnd || (!hasHandoff && revealed >= aiEnd)
   const before = script.slice(0, Math.min(revealed, aiEnd))
-  const showAfter = hasHandoff && (isLive ? aiDone : isAccepted)
-  const after = hasHandoff
-    ? script.slice(handoffAt + 1, isLive ? revealed : undefined)
-    : []
-  const nextTurn = isLive && liveSession!.typing ? script[revealed] : undefined
+  const showAfter = hasHandoff && aiDone
+  const after = hasHandoff ? script.slice(handoffAt + 1, revealed) : []
+  const nextTurn = (isLive ? liveSession!.typing : replaying)
+    ? script[revealed]
+    : undefined
   const stepsShown = aiDone
     ? item.steps.length
     : Math.max(
@@ -199,6 +231,20 @@ export function AgentWorkspace() {
     chat.messages.length,
   ])
 
+  // Opening a different (or no) ticket starts its playback over from scratch.
+  useEffect(() => {
+    setReplay(0)
+  }, [selectedId])
+
+  // Step a static ticket's script forward on its own, like replaying a
+  // finished conversation -- from the first message through the handoff to
+  // however it wrapped up.
+  useEffect(() => {
+    if (!replaying) return
+    const t = setTimeout(() => setReplay((r) => r + 1), 650)
+    return () => clearTimeout(t)
+  }, [replaying, replay])
+
   // While Auto is on and it's genuinely the agent's turn, send that scripted
   // line for real. Keyed on chat.messages.length (not a local counter) so it
   // naturally waits out both network latency and the customer's own turns --
@@ -213,6 +259,7 @@ export function AgentWorkspace() {
   }, [autoRespondActive, chat.messages.length])
 
   function accept() {
+    if (!selectedId) return
     setAccepted((prev) => new Set(prev).add(selectedId))
     setTab("handoff")
     if (isLive) chat.takeover()
@@ -222,6 +269,73 @@ export function AgentWorkspace() {
     if (!draft.trim()) return
     chat.send("agent", draft)
     setDraft("")
+  }
+
+  const sidebar = (
+    <aside className="flex min-h-0 flex-col border-b border-border bg-card lg:border-r lg:border-b-0">
+      <div className="p-3">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1 text-[11px] font-semibold tracking-wide uppercase">
+          <TabButton active={tab === "ai"} onClick={() => setTab("ai")}>
+            <Sparkles className="size-3" /> AI Queue
+            <Count>{cases.length - accepted.size}</Count>
+          </TabButton>
+          <TabButton
+            active={tab === "handoff"}
+            onClick={() => setTab("handoff")}
+          >
+            Handoff
+            <Count>{accepted.size}</Count>
+          </TabButton>
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
+        {listed.length === 0 && (
+          <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+            {tab === "handoff"
+              ? "Accept a handoff to see it here."
+              : "No conversations waiting."}
+          </p>
+        )}
+        {listed.map((c) => (
+          <QueueRow
+            key={c.scenarioId}
+            item={c}
+            active={c.scenarioId === selectedId}
+            live={c.scenarioId === liveCaseId}
+            onClick={() => setSelectedId(c.scenarioId)}
+          />
+        ))}
+      </div>
+    </aside>
+  )
+
+  if (selectedId === null) {
+    return (
+      <div className="flex min-h-svh flex-col bg-background lg:h-svh lg:overflow-hidden">
+        <WorkspaceHeader
+          active={null}
+          used={[]}
+          relay={relay}
+          autoRespond={autoRespond}
+          onToggleAutoRespond={() => setAutoRespond((v) => !v)}
+        />
+
+        <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
+          {sidebar}
+          <main className="flex min-h-[520px] min-w-0 flex-col items-center justify-center gap-2 px-6 text-center lg:col-span-2 lg:min-h-0">
+            <Sparkles className="size-6 text-muted-foreground/50" />
+            <p className="text-sm font-medium text-foreground">
+              Select a ticket to view the conversation
+            </p>
+            <p className="max-w-xs text-xs text-muted-foreground">
+              Pick any ticket from the queue on the left. The one marked with
+              an eye is currently live with a customer.
+            </p>
+          </main>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -235,42 +349,7 @@ export function AgentWorkspace() {
       />
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
-        <aside className="flex min-h-0 flex-col border-b border-border bg-card lg:border-r lg:border-b-0">
-          <div className="p-3">
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1 text-[11px] font-semibold tracking-wide uppercase">
-              <TabButton active={tab === "ai"} onClick={() => setTab("ai")}>
-                <Sparkles className="size-3" /> AI Queue
-                <Count>{cases.length - accepted.size}</Count>
-              </TabButton>
-              <TabButton
-                active={tab === "handoff"}
-                onClick={() => setTab("handoff")}
-              >
-                Handoff
-                <Count>{accepted.size}</Count>
-              </TabButton>
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
-            {listed.length === 0 && (
-              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-                {tab === "handoff"
-                  ? "Accept a handoff to see it here."
-                  : "No conversations waiting."}
-              </p>
-            )}
-            {listed.map((c) => (
-              <QueueRow
-                key={c.scenarioId}
-                item={c}
-                active={c.scenarioId === selectedId}
-                live={c.scenarioId === liveCaseId}
-                onClick={() => setSelectedId(c.scenarioId)}
-              />
-            ))}
-          </div>
-        </aside>
+        {sidebar}
 
         <main className="flex min-h-[520px] min-w-0 flex-col lg:min-h-0">
           <TicketHeader
@@ -632,7 +711,9 @@ function QueueRow({
         "block w-full border-l-2 px-4 py-3.5 text-left transition-colors",
         active
           ? "border-brand-teal bg-brand-teal/10"
-          : "border-transparent hover:bg-muted/50"
+          : live
+            ? "border-brand-navy bg-brand-teal/5 dark:border-brand-teal"
+            : "border-transparent hover:bg-muted/50"
       )}
     >
       <div className="flex items-center gap-2">
@@ -646,7 +727,12 @@ function QueueRow({
           {item.customer}
         </span>
         {live ? (
-          <LiveIndicator />
+          <span className="flex items-center gap-1">
+            <LiveIndicator />
+            <span className="text-[10px] font-bold tracking-wide text-brand-navy uppercase dark:text-brand-teal">
+              New ticket
+            </span>
+          </span>
         ) : (
           <span className="text-[11px] text-muted-foreground">
             {item.waiting}
@@ -657,7 +743,7 @@ function QueueRow({
         <span className="mr-1 font-medium">
           {directionOf(item.scenarioId) === "outbound" ? "↗" : "↙"}
         </span>
-        {item.subject}
+        {LAST_MESSAGE[item.scenarioId]}
       </p>
     </button>
   )
