@@ -58,12 +58,34 @@ const LAST_MESSAGE: Record<string, string> = Object.fromEntries(
   ])
 )
 
-/** Demo clock: the session starts at 10:41 AM and each step/message adds a minute. */
-function clock(offset: number) {
-  const total = 10 * 60 + 41 + offset
-  const h24 = Math.floor(total / 60) % 24
+/** Flattens a scripted turn into a plain chat-completion line for the
+ * co-pilot's context, where it exists -- structured cards (transactions,
+ * payment, etc.) aren't worth translating to text and are just skipped. */
+function scriptTurnToLine(
+  turn: ChatTurn
+): { role: "assistant" | "user"; text: string }[] {
+  if (turn.kind === "message") return [{ role: "assistant", text: turn.text }]
+  if (turn.kind === "reply") return [{ role: "user", text: turn.text }]
+  if (turn.kind === "checklist") {
+    const text = [turn.intro, ...turn.items, turn.outro]
+      .filter(Boolean)
+      .join(" ")
+    return text ? [{ role: "assistant", text }] : []
+  }
+  return []
+}
+
+/** Demo clock: anchored to the real time the page was opened (not a
+ * hardcoded hour) so times look current, not frozen at the same fake moment
+ * every run. `anchor` comes from client-only state (see AgentWorkspace) so
+ * this never runs during SSR, where "now" would mean the server's clock. */
+function clock(anchor: number | null, offset: number): string {
+  if (anchor === null) return "--:--"
+  const d = new Date(anchor + offset * 60_000)
+  const h24 = d.getHours()
   const h12 = ((h24 + 11) % 12) + 1
-  return `${h12}:${String(total % 60).padStart(2, "0")}`
+  const mm = String(d.getMinutes()).padStart(2, "0")
+  return `${h12}:${mm} ${h24 >= 12 ? "PM" : "AM"}`
 }
 
 export function AgentWorkspace() {
@@ -85,7 +107,20 @@ export function AgentWorkspace() {
   // something the agent has started editing -- purely for the "Suggested
   // reply" label, never gates whether it can be sent.
   const [isSuggestion, setIsSuggestion] = useState(false)
+  // Whether a suggestion request is in flight, for the "Generating…" label.
+  const [suggesting, setSuggesting] = useState(false)
+  // How many customer messages we've already requested a suggestion for --
+  // a ref (not state) so the effect below can dedupe without retriggering
+  // itself.
+  const suggestedForRef = useRef(-1)
   const endRef = useRef<HTMLDivElement>(null)
+  // Anchors the demo clock to the real moment the page opened, client-side
+  // only -- set post-mount (not a useState initializer) so SSR and the first
+  // client render agree on "--:--" and there's no hydration mismatch.
+  const [sessionStart, setSessionStart] = useState<number | null>(null)
+  useEffect(() => {
+    setSessionStart(Date.now())
+  }, [])
 
   const liveSession =
     relay.session?.status === "active" &&
@@ -128,19 +163,6 @@ export function AgentWorkspace() {
   const script = scriptsByScenario[displayId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
   const hasHandoff = handoffAt >= 0
-  // Jordan's scripted lines, offered as editable co-pilot suggestions once
-  // live -- never sent on their own, just a starting point the agent can
-  // send as-is, edit, or ignore entirely.
-  const cannedAgentLines = hasHandoff
-    ? script
-        .slice(handoffAt + 1)
-        .filter(
-          (t): t is Extract<ChatTurn, { kind: "message" }> =>
-            t.kind === "message" && t.from === "agent"
-        )
-        .map((t) => t.text)
-    : []
-  const sentAgentCount = chat.messages.filter((m) => m.from === "agent").length
   const customerMessageCount = chat.messages.filter(
     (m) => m.from === "customer"
   ).length
@@ -159,6 +181,16 @@ export function AgentWorkspace() {
   const after = hasHandoff ? script.slice(handoffAt + 1, revealed) : []
   const nextTurn =
     isLive && liveSession!.typing ? script[revealed] : undefined
+  // What the co-pilot gets to work with: Ava's real conversation with this
+  // customer, followed by the live exchange since the takeover -- not the
+  // scenario's canned continuation, since that's no longer what's happening.
+  const suggestTranscript = [
+    ...before.flatMap((turn) => scriptTurnToLine(turn)),
+    ...chat.messages.map((m) => ({
+      role: m.from === "agent" ? ("assistant" as const) : ("user" as const),
+      text: m.text,
+    })),
+  ]
   const stepsShown = aiDone
     ? item.steps.length
     : Math.max(
@@ -186,6 +218,25 @@ export function AgentWorkspace() {
         { system: "CDP", label: `${AGENT_NAME} took over the conversation` },
       ]
     : doneSteps
+  // A finished (static) ticket already happened, so its timestamps read
+  // backward from "now" -- the last message is the most recent, earlier ones
+  // further in the past. A live ticket has no fixed "last turn" yet while
+  // it's still unfolding, so it keeps counting forward from when the page
+  // opened instead.
+  const lastTurnDisplayIndex =
+    showAfter && after.length > 0
+      ? before.length + 2 + after.length - 1
+      : before.length - 1
+  function turnTime(displayIndex: number) {
+    return isLive
+      ? clock(sessionStart, displayIndex)
+      : clock(sessionStart, displayIndex - lastTurnDisplayIndex)
+  }
+  function stepTime(stepIndex: number) {
+    return isLive
+      ? clock(sessionStart, stepIndex)
+      : clock(sessionStart, stepIndex - (steps.length - 1))
+  }
   // Live, the header follows the AI's latest step like a stepper. On a finished
   // ticket you can click any step to see which system it used.
   const pinnedIndex =
@@ -222,18 +273,43 @@ export function AgentWorkspace() {
     chat.messages.length,
   ])
 
-  // Co-pilot: once live, drop Jordan's next scripted line into the composer
-  // as a starting point -- right after takeover, and again each time the
-  // customer sends something new -- but only while the box is still empty,
-  // so it never overwrites whatever the agent is already typing.
+  // Co-pilot: once live, ask the model for a suggested reply -- right after
+  // takeover, and again each time the customer sends something new -- and
+  // drop it into the composer as an editable starting point. Only while the
+  // box is still empty, so it never overwrites what the agent is typing, and
+  // only once per customer message (the ref), so it doesn't re-fire on every
+  // render while the request is in flight.
   useEffect(() => {
     if (!liveHandoffActive || draft.trim()) return
-    const suggestion = cannedAgentLines[sentAgentCount]
-    if (!suggestion) return
-    setDraft(suggestion)
-    setIsSuggestion(true)
+    if (suggestedForRef.current === customerMessageCount) return
+    suggestedForRef.current = customerMessageCount
+    let cancelled = false
+    setSuggesting(true)
+    fetch("/api/suggest-reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer: item.customer,
+        issue: item.issue,
+        tier: item.tier,
+        transcript: suggestTranscript,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { suggestion?: string } | null) => {
+        if (cancelled || !data?.suggestion) return
+        setDraft(data.suggestion)
+        setIsSuggestion(true)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setSuggesting(false)
+      })
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveHandoffActive, customerMessageCount, sentAgentCount])
+  }, [liveHandoffActive, customerMessageCount])
 
   function accept() {
     if (!selectedId) return
@@ -343,7 +419,7 @@ export function AgentWorkspace() {
               <TranscriptTurn
                 key={turn.id}
                 turn={turn}
-                time={clock(i)}
+                time={turnTime(i)}
                 customer={item.customer}
               />
             ))}
@@ -365,7 +441,7 @@ export function AgentWorkspace() {
                 <TranscriptTurn
                   key={turn.id}
                   turn={turn}
-                  time={clock(before.length + 2 + i)}
+                  time={turnTime(before.length + 2 + i)}
                   customer={item.customer}
                 />
               ))}
@@ -390,12 +466,20 @@ export function AgentWorkspace() {
           <div className="flex items-end gap-3 border-t border-border bg-card px-4 py-3">
             {liveHandoffActive ? (
               <div className="flex-1">
-                {isSuggestion && (
+                {isSuggestion ? (
                   <div className="mb-1 flex items-center gap-1 text-[11px] font-medium text-brand-navy dark:text-brand-teal">
                     <Sparkles className="size-3" /> Suggested reply — edit or
                     send as-is
                   </div>
-                )}
+                ) : suggesting && !draft.trim() ? (
+                  <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                    <span className="relative flex size-1.5">
+                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-teal/70" />
+                      <span className="relative inline-flex size-1.5 rounded-full bg-brand-teal" />
+                    </span>
+                    Generating a suggested reply…
+                  </div>
+                ) : null}
                 <input
                   value={draft}
                   onChange={(e) => {
@@ -459,7 +543,8 @@ export function AgentWorkspace() {
                     : (index) => setPinned({ caseId: selectedId, index })
                 }
                 summaryReady={aiDone}
-                time={clock(aiEnd + 1)}
+                time={stepTime(steps.length - 1)}
+                stepTime={stepTime}
               />
             ) : (
               <OrchestrationPanel
@@ -803,6 +888,7 @@ function SummaryPanel({
   onSelectStep,
   summaryReady,
   time,
+  stepTime,
 }: {
   item: CaseFile
   steps: CaseStep[]
@@ -810,6 +896,7 @@ function SummaryPanel({
   onSelectStep?: (index: number) => void
   summaryReady: boolean
   time: string
+  stepTime: (stepIndex: number) => string
 }) {
   return (
     <>
@@ -819,7 +906,7 @@ function SummaryPanel({
             <Sparkles className="size-3.5" /> AI Summary
           </h3>
           <span className="font-mono text-[10px] text-muted-foreground">
-            {time} AM
+            {time}
           </span>
         </div>
         {summaryReady ? (
@@ -878,7 +965,7 @@ function SummaryPanel({
                     </span>
                   </span>
                   <span className="shrink-0 pt-0.5 font-mono text-[10px] text-muted-foreground">
-                    {clock(i)}
+                    {stepTime(i)}
                   </span>
                 </Row>
               </li>
@@ -1130,14 +1217,22 @@ function OrchestrationPanel({
 
 function AiLabel({ time }: { time: string }) {
   return (
-    <div className="mb-1 flex items-center gap-1.5 text-xs">
+    <div className="mb-1 ml-10 flex items-center gap-1.5 text-xs">
       <Sparkles className="size-3 text-brand-navy dark:text-brand-teal" />
       <span className="font-semibold text-brand-navy dark:text-brand-teal">
         Ava AI
       </span>
       <span className="font-mono text-[10px] text-muted-foreground">
-        {time} AM
+        {time}
       </span>
+    </div>
+  )
+}
+
+function AvaAvatar() {
+  return (
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-teal text-brand-navy">
+      <Sparkles className="size-3.5" />
     </div>
   )
 }
@@ -1153,33 +1248,32 @@ function TranscriptTurn({
 }) {
   switch (turn.kind) {
     case "message": {
-      const live = turn.from === "agent"
-      return (
-        <div
-          className={cn("flex flex-col", live ? "items-end" : "items-start")}
-        >
-          <div className="max-w-[85%]">
-            {live ? (
+      if (turn.from === "agent") {
+        return (
+          <div className="flex flex-col items-end">
+            <div className="max-w-[85%]">
               <div className="mb-1 flex items-center justify-end gap-1.5 text-xs">
                 <span className="font-mono text-[10px] text-muted-foreground">
-                  {time} AM
+                  {time}
                 </span>
                 <span className="text-muted-foreground">Live Agent</span>
                 <span className="font-semibold text-brand-navy dark:text-brand-teal">
                   {turn.speaker}
                 </span>
               </div>
-            ) : (
-              <AiLabel time={time} />
-            )}
-            <div
-              className={cn(
-                "rounded-2xl border px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground",
-                live
-                  ? "rounded-tr-md border-brand-navy/20 bg-brand-navy/8"
-                  : "rounded-tl-md border-brand-teal/25 bg-brand-teal/10"
-              )}
-            >
+              <div className="rounded-2xl rounded-tr-md border border-brand-navy/20 bg-brand-navy/8 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground">
+                {turn.text}
+              </div>
+            </div>
+          </div>
+        )
+      }
+      return (
+        <div className="flex flex-col items-start">
+          <AiLabel time={time} />
+          <div className="flex items-end gap-2">
+            <AvaAvatar />
+            <div className="max-w-[26rem] rounded-2xl rounded-bl-md border border-brand-teal/25 bg-brand-teal/10 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground">
               {turn.text}
             </div>
           </div>
@@ -1188,43 +1282,48 @@ function TranscriptTurn({
     }
     case "checklist":
       return (
-        <div className="max-w-[85%]">
+        <div>
           <AiLabel time={time} />
-          <div className="space-y-2 rounded-2xl rounded-tl-md border border-brand-teal/25 bg-brand-teal/10 px-4 py-3 text-sm text-foreground">
-            {turn.intro && <p className="whitespace-pre-line">{turn.intro}</p>}
-            <ul className="space-y-1">
-              {turn.items.map((it) => (
-                <li key={it} className="flex items-start gap-1.5">
-                  <Check
-                    className="mt-0.5 size-3.5 shrink-0 text-brand-navy dark:text-brand-teal"
-                    strokeWidth={3}
-                  />{" "}
-                  {it}
-                </li>
-              ))}
-              {turn.pending?.map((it) => (
-                <li
-                  key={it}
-                  className="flex items-start gap-1.5 text-muted-foreground"
-                >
-                  <Circle className="mt-0.5 size-3.5 shrink-0 opacity-50" />{" "}
-                  {it}
-                </li>
-              ))}
-            </ul>
-            {turn.outro && <p>{turn.outro}</p>}
+          <div className="flex items-end gap-2">
+            <AvaAvatar />
+            <div className="max-w-[26rem] space-y-2 rounded-2xl rounded-bl-md border border-brand-teal/25 bg-brand-teal/10 px-4 py-3 text-sm text-foreground">
+              {turn.intro && (
+                <p className="whitespace-pre-line">{turn.intro}</p>
+              )}
+              <ul className="space-y-1">
+                {turn.items.map((it) => (
+                  <li key={it} className="flex items-start gap-1.5">
+                    <Check
+                      className="mt-0.5 size-3.5 shrink-0 text-brand-navy dark:text-brand-teal"
+                      strokeWidth={3}
+                    />{" "}
+                    {it}
+                  </li>
+                ))}
+                {turn.pending?.map((it) => (
+                  <li
+                    key={it}
+                    className="flex items-start gap-1.5 text-muted-foreground"
+                  >
+                    <Circle className="mt-0.5 size-3.5 shrink-0 opacity-50" />{" "}
+                    {it}
+                  </li>
+                ))}
+              </ul>
+              {turn.outro && <p>{turn.outro}</p>}
+            </div>
           </div>
         </div>
       )
     case "reply":
       return (
         <div className="flex flex-col items-start">
-          <div className="mb-1 flex items-center gap-1.5 text-xs">
+          <div className="mb-1 ml-10 flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-foreground">
               {customer.split(" ")[0]}
             </span>
             <span className="font-mono text-[10px] text-muted-foreground">
-              {time} AM
+              {time}
             </span>
           </div>
           <div className="flex items-end gap-2">
@@ -1471,7 +1570,7 @@ function LiveMessageRow({
   }
   return (
     <div className="flex flex-col items-start">
-      <div className="mb-1 flex items-center gap-1.5 text-xs">
+      <div className="mb-1 ml-10 flex items-center gap-1.5 text-xs">
         <span className="font-semibold text-foreground">
           {customer.split(" ")[0]}
         </span>
