@@ -23,7 +23,7 @@ interface ActiveSpeaker {
 
 /** Who the header/typing-indicator should show as currently speaking — derived
  * from the last message/checklist/handoff turn revealed, not just whether a
- * handoff ever happened, so the header correctly flips back to Ava if she
+ * handoff ever happened, so the header correctly flips back to Adam if she
  * resumes the conversation after a live agent. */
 function speakerFor(turn: ChatTurn): ActiveSpeaker | null {
   if (turn.kind === "message" || turn.kind === "checklist") {
@@ -41,7 +41,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   const [index, setIndex] = useState(0)
   const [typing, setTyping] = useState(false)
   const [activeSpeaker, setActiveSpeaker] = useState<ActiveSpeaker>({
-    name: "Ava",
+    name: "Adam",
     tone: "ai",
   })
   const [verdicts, setVerdicts] = useState<Record<string, TxnVerdict>>({})

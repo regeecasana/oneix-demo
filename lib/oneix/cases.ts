@@ -17,7 +17,7 @@ export const caseFiles: Record<string, CaseFile> = {
     issue: "Fraud · Possible ATO",
     channel: "Mobile App Chat",
     summary: [
-      "Maya Chen reported an unauthorized $1,284.67 LUXEMARKET.COM debit charge. Ava confirmed identity with Face ID, froze card ••••1842 and marked the $600 ATM withdrawal and LUXEMARKET as disputed, keeping MetroRide as hers. She then disclosed reading a ",
+      "Maya Chen reported an unauthorized $1,284.67 LUXEMARKET.COM debit charge. Adam confirmed identity with Face ID, froze card ••••1842 and marked the $600 ATM withdrawal and LUXEMARKET as disputed, keeping MetroRide as hers. She then disclosed reading a ",
       { text: "one-time code to a caller", tone: "danger" },
       " yesterday — a ",
       { text: "possible account takeover", tone: "danger" },
@@ -161,7 +161,7 @@ export const caseFiles: Record<string, CaseFile> = {
     issue: "Rebooking · Companion Ticket",
     channel: "Mobile App Chat",
     summary: [
-      "Mei Lin Tan's Tokyo flight was cancelled; she is travelling with her husband Wei Ming and daughter Chloe (6). She chose the 8:15 AM Narita option and all three are seatable. Ava can rebook Mei Lin and Chloe automatically, but ",
+      "Mei Lin Tan's Tokyo flight was cancelled; she is travelling with her husband Wei Ming and daughter Chloe (6). She chose the 8:15 AM Narita option and all three are seatable. Adam can rebook Mei Lin and Chloe automatically, but ",
       {
         text: "Wei Ming's ticket was issued with a miles companion redemption",
         tone: "warn",
@@ -208,7 +208,7 @@ export const caseFiles: Record<string, CaseFile> = {
       "Reissue Wei Ming's companion ticket, preserving the redemption",
       "Confirm seats 42A–42C together on OA826",
       "Restore Chloe's child-meal special service request",
-      "Return to Ava to send the itinerary and update the trip checklist",
+      "Return to Adam to send the itinerary and update the trip checklist",
     ],
     profile: [
       { label: "Traveller", value: "Mei Lin Tan" },
@@ -231,7 +231,7 @@ export const caseFiles: Record<string, CaseFile> = {
     issue: "Flight Delay · AI Resolved",
     channel: "WhatsApp",
     summary: [
-      "OA720 to Tokyo Haneda was delayed by 3h 30m. Orchid Air's disruption feed flagged Daniel Lim before he noticed, and Ava reached out with a no-charge move to OA712 at 7:05 AM. He chose it for a 5 PM meeting. Ava reissued the ticket, kept his aisle seat (18C) and baggage, moved his app reminder to 4:45 AM, and refunded the ",
+      "OA720 to Tokyo Haneda was delayed by 3h 30m. Orchid Air's disruption feed flagged Daniel Lim before he noticed, and Adam reached out with a no-charge move to OA712 at 7:05 AM. He chose it for a 5 PM meeting. Adam reissued the ticket, kept his aisle seat (18C) and baggage, moved his app reminder to 4:45 AM, and refunded the ",
       { text: "S$48 unused extra-legroom charge", tone: "warn" },
       " (RF-804312) on request. ",
       "No human handoff was needed.",
@@ -299,7 +299,7 @@ export const caseFiles: Record<string, CaseFile> = {
     summary: [
       "Priya Nair (Singapore PR) resumed her ~80% complete application and verified her Diploma in Information Technology with a digital credential. She then asked whether her diploma modules ",
       { text: "and four years of analytics experience", tone: "warn" },
-      " could shorten the degree. That combination is outside the published exemption rules, so Ava prepared the case for an admissions adviser rather than answering.",
+      " could shorten the degree. That combination is outside the published exemption rules, so Adam prepared the case for an admissions adviser rather than answering.",
     ],
     steps: [
       {
@@ -357,7 +357,7 @@ export const caseFiles: Record<string, CaseFile> = {
     issue: "Deferment · Offer Expiring",
     channel: "WhatsApp",
     summary: [
-      "Muhammad Irfan has not enrolled because he is still serving National Service until August next year. Ava prepared a deferment to January 2028, but his ",
+      "Muhammad Irfan has not enrolled because he is still serving National Service until August next year. Adam prepared a deferment to January 2028, but his ",
       { text: "offer expires in five days", tone: "danger" },
       " — before the standard review can finish. An admissions officer must place a temporary administrative hold.",
     ],
@@ -418,7 +418,7 @@ export const caseFiles: Record<string, CaseFile> = {
     summary: [
       "Madam Lim, 68, asked to move her cardiology follow-up because her daughter cannot take leave. During safety screening she reported ",
       { text: "new or increased breathlessness", tone: "danger" },
-      " walking this week. Ava stopped the routine reschedule, gave no diagnosis or advice, and routed her to the cardiology care team with the appointment and symptom summary.",
+      " walking this week. Adam stopped the routine reschedule, gave no diagnosis or advice, and routed her to the cardiology care team with the appointment and symptom summary.",
     ],
     steps: [
       {
@@ -471,7 +471,7 @@ export const caseFiles: Record<string, CaseFile> = {
     summary: [
       "WellSG's T-48h reminder confirmed Madam Lim's Tuesday 2:40 PM cardiology visit and shared the provider-approved pre-visit instructions. She then asked whether to ",
       { text: "stop taking her medicine before the appointment", tone: "warn" },
-      ". That is outside Ava's authorized scope, so she escalated with the appointment context instead of answering.",
+      ". That is outside Adam's authorized scope, so she escalated with the appointment context instead of answering.",
     ],
     steps: [
       { system: "Marketing", label: "APPOINTMENT_T_MINUS_48H event emitted" },

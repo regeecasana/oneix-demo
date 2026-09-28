@@ -13,41 +13,41 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
-    text: "Hi Maya. I'm Ava. I already have the transaction you flagged — the $1,284.67 LUXEMARKET.COM charge. You said it wasn't yours. Is that correct?",
+    speaker: "Adam",
+    text: "Hi Maya. I'm Adam. I already have the transaction you flagged — the $1,284.67 LUXEMARKET.COM charge. You said it wasn't yours. Is that correct?",
   },
   { kind: "reply", text: "Yes. I've never heard of that merchant." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I'm sorry to hear that. Let's secure your account right away. Before I make any changes, I need to verify it's you — please confirm with Face ID.",
   },
   { kind: "faceid", text: "Identity confirmed via Face ID." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Do you still have the physical card ending in 1842 with you?",
   },
   { kind: "reply", text: "Yes, I still have it." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Does anyone else have permission to use this card or your checking account?",
   },
   { kind: "reply", text: "No. Just me." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I'm checking your recent activity now.",
   },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I found two more recent transactions. Please tell me if you recognize them.",
   },
   {
@@ -73,21 +73,21 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Got it — I've noted MetroRide as yours. The $600 ATM withdrawal and the $1,284.67 LUXEMARKET charge are both flagged as disputed. Because two different channels were used, I recommend freezing card 1842 right now. Your checking account stays open.",
   },
   { kind: "reply", text: "Yes — please freeze it." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Done — card ••••1842 is now frozen.",
   },
   { kind: "system", text: "Card status: BLOCKED — suspected fraud." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "One more question: in the last few days, did anyone contact you claiming to be from your bank and ask you to share a verification code or approve a notification?",
   },
   {
@@ -97,13 +97,13 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Thank you for telling me. I've already taken care of the following — you won't need to repeat any of this.",
   },
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     items: [
       "Frozen card ••••1842",
       "Marked LUXEMARKET and the ATM withdrawal as disputed",
@@ -114,7 +114,7 @@ const fraudScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Because a code may have been shared, I'm transferring you to an Account Protection specialist who can review your online access.",
   },
   { kind: "handoff", to: "Jordan", role: "Account Protection" },
@@ -122,7 +122,7 @@ const fraudScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Maya, I'm Jordan with Account Protection. Ava's brought me up to speed.",
+    text: "Hi Maya, I'm Jordan with Account Protection. Adam's brought me up to speed.",
   },
   {
     kind: "message",
@@ -203,8 +203,8 @@ const collectionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
-    text: "Hi Daniel. I'm Ava. I'm reaching out about your Rewards account ending in 4821. As of today, there's a past-due balance of $286.40. I'm here to help find a solution that works for you.",
+    speaker: "Adam",
+    text: "Hi Daniel. I'm Adam. I'm reaching out about your Rewards account ending in 4821. As of today, there's a past-due balance of $286.40. I'm here to help find a solution that works for you.",
   },
   {
     kind: "reply",
@@ -213,13 +213,13 @@ const collectionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I'm sorry to hear that. We can look at your options together — you don't need to explain more than is necessary.",
   },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "What would be most realistic for you right now?",
   },
   {
@@ -229,19 +229,19 @@ const collectionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Thank you — I'll check what's available for your account. I won't schedule any payment without your review first.",
   },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "The standard arrangements require the full past-due amount sooner than your timeline. A hardship review is available but needs specialist approval. I'll collect what's needed so you won't have to start over.",
   },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Would you prefer future account reminders by mobile app rather than phone calls?",
   },
   {
@@ -251,13 +251,13 @@ const collectionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Done — I've set mobile app as your preferred channel and marked the former work number as unavailable.",
   },
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     intro: "Here's everything I'm sharing with the specialist:",
     items: [
       "$286.40 past due",
@@ -273,7 +273,7 @@ const collectionsScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Daniel. I'm Jordan with Payment Assistance. Ava has given me the full picture — the $100 on Sep 18, your income timing, and the work number removed.",
+    text: "Hi Daniel. I'm Jordan with Payment Assistance. Adam has given me the full picture — the $100 on Sep 18, your income timing, and the work number removed.",
   },
   {
     kind: "message",
@@ -318,7 +318,7 @@ const collectionsScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Before we finish: if your situation changes and one of these payments no longer works, contact us before the payment date. The app will bring you directly back to this arrangement, so Ava will see what we've already agreed.",
+    text: "Before we finish: if your situation changes and one of these payments no longer works, contact us before the payment date. The app will bring you directly back to this arrangement, so Adam will see what we've already agreed.",
   },
   {
     kind: "reply",
@@ -362,7 +362,7 @@ const rebookingScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I'm sorry, Mei Lin. I can see the affected booking for you, Wei Ming and Chloe from Singapore to Tokyo Haneda tomorrow.\n\nI also see Chloe's child-meal request, your three checked-baggage allowances and your current seat preferences. I'll keep those in mind.\n\nLet me check the rebooking options available under today's disruption policy.",
   },
   {
@@ -407,13 +407,13 @@ const rebookingScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "The 8:15 AM Narita flight has seats for all three of you.\n\nI can rebook you and Chloe automatically. Wei Ming's ticket is linked to a miles redemption, which requires a ticketing specialist to preserve the redemption correctly.",
   },
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     intro:
       "I don't want you to repeat everything to another agent. I've already prepared the rebooking request with:",
     items: [
@@ -432,7 +432,7 @@ const rebookingScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Mei Lin, I'm Jordan. Ava has passed everything to me, so you don't need to explain the situation again.",
+    text: "Hi Mei Lin, I'm Jordan. Adam has passed everything to me, so you don't need to explain the situation again.",
   },
   {
     kind: "message",
@@ -460,20 +460,20 @@ const rebookingScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I've sent the new flight itinerary to your email.\n\nYour original booking was disrupted by the airline, so there was no rebooking fare difference in this policy.",
   },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Would you like me to update the airport-transfer details in your trip checklist from Haneda to Narita?",
   },
   { kind: "reply", text: "Yes please." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Done. I've updated your trip checklist for Narita.\n\nHave a good trip, Mei Lin. I hope the rest of your journey is much smoother.",
   },
   {
@@ -496,7 +496,7 @@ const disruptionScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Hi Daniel, this is Orchid Air.\n\nYour flight OA720 from Singapore to Tokyo Haneda tomorrow has been delayed by 3 hours 30 minutes.\n\nI've already checked alternatives based on your booking.\n\nI can move you to OA712 at 7:05 AM, arriving Tokyo at 2:55 PM, with no rebooking charge under today's disruption policy.\n\nYour aisle-seat preference and checked baggage can be retained.",
   },
   {
@@ -511,13 +511,13 @@ const disruptionScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Understood. The earlier flight is the safer option for that schedule.\n\nI'm holding your seat while I reissue the ticket.",
   },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Done — you're now confirmed on OA712 departing Singapore at 7:05 AM.\n\nYour seat is 18C, aisle.\n\nI've sent your updated itinerary and boarding information to your email.\n\nBecause the new departure is earlier, I've also changed your app reminder to 4:45 AM Singapore time.",
   },
   {
@@ -527,14 +527,14 @@ const disruptionScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Your paid extra-legroom seat could not be matched on the new flight. I can see a S$48 unused charge on the disrupted itinerary.\n\nI can submit that amount for refund to the original payment method now.",
   },
   { kind: "reply", text: "Yes, refund it." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Done. Refund reference RF-804312 has been created for S$48.\n\nYou don't need to submit a separate claim.",
   },
   {
@@ -563,21 +563,21 @@ const admissionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Hi Priya. I can help you check the entry pathway and, if you'd like, take you through the application step by step.\n\nYou don't need to upload anything yet.\n\nAre you applying as a Singapore Citizen, Permanent Resident or international applicant?",
   },
   { kind: "reply", text: "PR." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Thanks. And is your highest qualification a Singapore polytechnic diploma?",
   },
   { kind: "reply", text: "Yes, Diploma in Information Technology." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Great. Based on the programme rules in our admissions system, that qualification can be assessed for admission to the Applied AI programme.\n\nBecause you also have four years of relevant work experience, there may be a separate assessment for advanced standing, but that decision has to be made by the academic admissions team.",
   },
   {
@@ -592,7 +592,7 @@ const admissionsScriptContent: ChatTurnContent[] = [
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     intro:
       "I found the application you started on September 8. You're about 80% complete. You do not need to restart it.\n\nHere's what's already complete:",
     items: [
@@ -613,14 +613,14 @@ const admissionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Please share it through the secure upload panel. The file will be used for your admissions assessment.",
   },
   { kind: "system", text: "Credential uploaded — verifying issuer signature…" },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Verified.",
   },
   {
@@ -634,7 +634,7 @@ const admissionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "You no longer need to upload a separate scanned diploma for this requirement.\n\nYour application is now missing only the employer reference and declaration.",
   },
   {
@@ -644,13 +644,13 @@ const admissionsScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I can check the published exemptions, but your case goes beyond the standard rules because you're asking us to consider both prior study and professional experience.\n\nI can already see the relevant information, so let me prepare the assessment rather than asking you to explain it again.",
   },
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     intro: "I have:",
     items: [
       "your verified diploma",
@@ -666,7 +666,7 @@ const admissionsScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Priya, I'm Jordan from Admissions.\n\nAva has passed me your application and the verified credential, including your request for advanced standing.\n\nI can see you've completed modules in databases, programming and statistics, plus your recent analytics experience.\n\nI can't promise an exemption at this stage because the academic school makes the final decision, but I can submit the assessment request now without asking you for the same documents again.",
+    text: "Hi Priya, I'm Jordan from Admissions.\n\nAdam has passed me your application and the verified credential, including your request for advanced standing.\n\nI can see you've completed modules in databases, programming and statistics, plus your recent analytics experience.\n\nI can't promise an exemption at this stage because the academic school makes the final decision, but I can submit the assessment request now without asking you for the same documents again.",
   },
   {
     kind: "reply",
@@ -727,7 +727,7 @@ const enrolmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Hi Irfan, congratulations again on your offer for the Bachelor of Computing at Meridian Institute.\n\nYour enrolment deadline is 22 September, and I can see that the final enrolment step hasn't been completed.\n\nI can help you finish it now, or answer anything that's holding you back.",
   },
   {
@@ -737,14 +737,14 @@ const enrolmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Thanks for telling me. You shouldn't accept an enrolment date that you know you can't attend.\n\nMeridian has a deferment process for applicants who cannot start their offered enrolment. I can begin the request using the information already in your application.\n\nI need to confirm one thing: when do you expect to complete National Service?",
   },
   { kind: "reply", text: "August next year." },
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Thank you.\n\nBased on that date, the next suitable enrolment in the calendar is January 2028. I can prepare a deferment request for that.\n\nYour admissions offer will remain pending until Admissions approves the change.\n\nShall I submit the request?",
   },
   {
@@ -754,13 +754,13 @@ const enrolmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Good question.\n\nBecause your offer expires before the standard deferment review is expected to finish, I need an admissions officer to place a temporary hold on the offer.",
   },
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     intro: "I've already prepared the case with:",
     items: [
       "your current offer",
@@ -775,7 +775,7 @@ const enrolmentScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hi Irfan. I've reviewed Ava's summary.\n\nI've placed a temporary administrative hold on the offer while we process your deferment request, so the current five-day deadline won't automatically close this application during the review.",
+    text: "Hi Irfan. I've reviewed Adam's summary.\n\nI've placed a temporary administrative hold on the offer while we process your deferment request, so the current five-day deadline won't automatically close this application during the review.",
   },
   { kind: "reply", text: "That's a relief. Do I need to send anything?" },
   {
@@ -787,7 +787,7 @@ const enrolmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Done. Your application status is now:",
   },
   {
@@ -803,7 +803,7 @@ const enrolmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I've paused the original enrolment reminders so you won't keep receiving deadline messages.\n\nI'll notify you when the deferment decision is available.",
   },
 ]
@@ -818,7 +818,7 @@ const appointmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Of course, Madam Lim. I can help with the appointment.\n\nI can see your cardiology follow-up next Thursday at 10:20 AM.\n\nBefore I offer later dates, I need to check two safety questions that apply to this type of appointment.\n\nAre you asking to change it only because of scheduling, or has anything about your health changed since your last visit?",
   },
   {
@@ -828,7 +828,7 @@ const appointmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Thank you for telling me.\n\nBecause you've mentioned new or increased breathlessness, I don't want to simply move your cardiology appointment to a later date without a clinician reviewing that change.\n\nI won't try to diagnose the cause here.\n\nI can connect you to the cardiology care team now and give them the appointment and symptom information you've already shared.",
   },
   { kind: "reply", text: "Yes please." },
@@ -837,7 +837,7 @@ const appointmentScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hello Madam Lim, I'm Jordan from the cardiology care team.\n\nAva has told me you wanted to move next Thursday's appointment because your daughter can't attend, and that you've noticed more breathlessness while walking this week.\n\nI'll ask you a few questions so we can decide the safest next step.",
+    text: "Hello Madam Lim, I'm Jordan from the cardiology care team.\n\nAdam has told me you wanted to move next Thursday's appointment because your daughter can't attend, and that you've noticed more breathlessness while walking this week.\n\nI'll ask you a few questions so we can decide the safest next step.",
   },
   {
     kind: "message",
@@ -859,7 +859,7 @@ const appointmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Your appointment has been updated:",
   },
   {
@@ -875,7 +875,7 @@ const appointmentScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I've sent the new appointment details to your app. The care team's approved pre-visit instructions are also available there.\n\nIf your symptoms worsen before the appointment, please follow the urgent-care instructions Nurse Jordan provided rather than waiting for the scheduled visit.",
   },
 ]
@@ -889,7 +889,7 @@ const previsitScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Hi Madam Lim, a reminder from WellSG Health.\n\nYou have an appointment on:",
   },
   {
@@ -904,7 +904,7 @@ const previsitScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "Would you like to confirm, change the appointment or review your pre-visit instructions?",
   },
   {
@@ -919,7 +919,7 @@ const previsitScriptContent: ChatTurnContent[] = [
   {
     kind: "checklist",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     intro:
       "Your appointment is confirmed.\n\nFor this visit, your care team's instructions are:",
     items: [
@@ -936,7 +936,7 @@ const previsitScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "I understand your concern.\n\nI don't want to provide medication instructions that may not apply specifically to you.\n\nI can connect you with the cardiology care team so they can provide the correct guidance. I will share your appointment details and question with them so you do not need to repeat the information.",
   },
   { kind: "reply", text: "Yes, please connect me." },
@@ -945,7 +945,7 @@ const previsitScriptContent: ChatTurnContent[] = [
     kind: "message",
     from: "agent",
     speaker: "Jordan",
-    text: "Hello Madam Lim, I'm Jordan from the cardiology care team.\n\nAva has shared your question about your medication and your upcoming cardiology appointment.\n\nI understand you want to confirm whether there are any medication instructions before your visit. Let me review your appointment details and provide the appropriate guidance.",
+    text: "Hello Madam Lim, I'm Jordan from the cardiology care team.\n\nAdam has shared your question about your medication and your upcoming cardiology appointment.\n\nI understand you want to confirm whether there are any medication instructions before your visit. Let me review your appointment details and provide the appropriate guidance.",
   },
   {
     kind: "message",
@@ -957,7 +957,7 @@ const previsitScriptContent: ChatTurnContent[] = [
   {
     kind: "message",
     from: "ai",
-    speaker: "Ava",
+    speaker: "Adam",
     text: "You're welcome.\n\nYour appointment remains confirmed for Tuesday at 2:40 PM. If you have any other concerns before your visit, please contact us.",
   },
   {

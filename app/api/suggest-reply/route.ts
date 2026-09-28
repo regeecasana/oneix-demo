@@ -79,7 +79,7 @@ export async function POST(request: Request) {
   const tier = textField(body.tier)
 
   const systemPrompt = [
-    `You are ${AGENT_NAME}, a live human support agent who has just taken over this conversation from Ava, an AI assistant, after a handoff.`,
+    `You are ${AGENT_NAME}, a live human support agent who has just taken over this conversation from Adam, an AI assistant, after a handoff.`,
     `You're talking with ${customer}.`,
     issue && `Case: ${issue}.`,
     tier && `Account: ${tier}.`,

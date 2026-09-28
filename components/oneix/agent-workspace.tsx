@@ -154,7 +154,7 @@ export function AgentWorkspace() {
   const isAccepted = accepted.has(displayId)
   const isLive = displayId === liveCaseId
 
-  // A human agent can take a live conversation over from Ava at any point --
+  // A human agent can take a live conversation over from Adam at any point --
   // via Accept once the scripted handoff is reached, or Takeover mid-AI. Once
   // taken, it becomes a real two-way exchange instead of the scripted lines.
   const chat = useLiveChat(isLive ? liveSession!.sessionId : null)
@@ -179,9 +179,8 @@ export function AgentWorkspace() {
   const before = script.slice(0, Math.min(revealed, aiEnd))
   const showAfter = hasHandoff && aiDone
   const after = hasHandoff ? script.slice(handoffAt + 1, revealed) : []
-  const nextTurn =
-    isLive && liveSession!.typing ? script[revealed] : undefined
-  // What the co-pilot gets to work with: Ava's real conversation with this
+  const nextTurn = isLive && liveSession!.typing ? script[revealed] : undefined
+  // What the co-pilot gets to work with: Adam's real conversation with this
   // customer, followed by the live exchange since the takeover -- not the
   // scenario's canned continuation, since that's no longer what's happening.
   const suggestTranscript = [
@@ -206,7 +205,7 @@ export function AgentWorkspace() {
       : notified
         ? "Live · Notification sent"
         : isLive && !aiDone
-          ? "Live · Ava is handling"
+          ? "Live · Adam is handling"
           : item.resolvedByAi
             ? "Resolved by AI"
             : "Awaiting agent"
@@ -377,8 +376,8 @@ export function AgentWorkspace() {
               Select a ticket to view the conversation
             </p>
             <p className="max-w-xs text-xs text-muted-foreground">
-              Pick any ticket from the queue on the left. The one marked with
-              an eye is currently live with a customer.
+              Pick any ticket from the queue on the left. The one marked with an
+              eye is currently live with a customer.
             </p>
           </main>
         </div>
@@ -411,8 +410,8 @@ export function AgentWorkspace() {
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
             <div className="mx-auto max-w-xl rounded-full border border-brand-teal/25 bg-brand-teal/10 px-4 py-2 text-center font-mono text-[11px] text-brand-navy dark:text-brand-teal">
               {direction === "outbound"
-                ? `Outbound journey · ${item.channel} · Consent checked · Ava AI assigned${notified ? " · Notification sent, waiting for the customer" : ""}`
-                : `Session started · ${item.channel} · CDP context loaded · Ava AI assigned`}
+                ? `Outbound journey · ${item.channel} · Consent checked · Adam AI assigned${notified ? " · Notification sent, waiting for the customer" : ""}`
+                : `Session started · ${item.channel} · CDP context loaded · Adam AI assigned`}
             </div>
 
             {before.map((turn, i) => (
@@ -917,7 +916,7 @@ function SummaryPanel({
           </p>
         ) : (
           <p className="text-[13px] leading-relaxed text-muted-foreground italic">
-            Ava is still handling this conversation. The summary is written at
+            Adam is still handling this conversation. The summary is written at
             handoff.
           </p>
         )}
@@ -1121,8 +1120,8 @@ function OrchestrationPanel({
           Orchestration
         </h3>
         <p className="mt-1.5 text-[13px] leading-snug text-white/80">
-          From raw data to a resolved conversation — see what each layer of
-          the stack does, and watch it happen here in real time.
+          From raw data to a resolved conversation — see what each layer of the
+          stack does, and watch it happen here in real time.
         </p>
       </section>
 
@@ -1154,7 +1153,9 @@ function OrchestrationPanel({
                   active && "ring-4 ring-brand-teal/25"
                 )}
               >
-                {(active || done) && <Check className="size-4" strokeWidth={3} />}
+                {(active || done) && (
+                  <Check className="size-4" strokeWidth={3} />
+                )}
               </span>
 
               <div
@@ -1220,7 +1221,7 @@ function AiLabel({ time }: { time: string }) {
     <div className="mb-1 ml-10 flex items-center gap-1.5 text-xs">
       <Sparkles className="size-3 text-brand-navy dark:text-brand-teal" />
       <span className="font-semibold text-brand-navy dark:text-brand-teal">
-        Ava AI
+        Adam AI
       </span>
       <span className="font-mono text-[10px] text-muted-foreground">
         {time}
@@ -1229,7 +1230,7 @@ function AiLabel({ time }: { time: string }) {
   )
 }
 
-function AvaAvatar() {
+function AdamAvatar() {
   return (
     <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-teal text-brand-navy">
       <Sparkles className="size-3.5" />
@@ -1272,7 +1273,7 @@ function TranscriptTurn({
         <div className="flex flex-col items-start">
           <AiLabel time={time} />
           <div className="flex items-end gap-2">
-            <AvaAvatar />
+            <AdamAvatar />
             <div className="max-w-[26rem] rounded-2xl rounded-bl-md border border-brand-teal/25 bg-brand-teal/10 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-foreground">
               {turn.text}
             </div>
@@ -1285,7 +1286,7 @@ function TranscriptTurn({
         <div>
           <AiLabel time={time} />
           <div className="flex items-end gap-2">
-            <AvaAvatar />
+            <AdamAvatar />
             <div className="max-w-[26rem] space-y-2 rounded-2xl rounded-bl-md border border-brand-teal/25 bg-brand-teal/10 px-4 py-3 text-sm text-foreground">
               {turn.intro && (
                 <p className="whitespace-pre-line">{turn.intro}</p>
