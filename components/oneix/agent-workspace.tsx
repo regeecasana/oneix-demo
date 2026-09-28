@@ -81,6 +81,10 @@ export function AgentWorkspace() {
     index: number
   } | null>(null)
   const [draft, setDraft] = useState("")
+  // True while `draft` is still the untouched co-pilot suggestion, not
+  // something the agent has started editing -- purely for the "Suggested
+  // reply" label, never gates whether it can be sent.
+  const [isSuggestion, setIsSuggestion] = useState(false)
   // How far a *static* ticket's full script has auto-played since it was
   // opened -- reviewing an old ticket plays it back start to finish instead
   // of dumping the whole transcript in at once.
@@ -128,6 +132,22 @@ export function AgentWorkspace() {
   const script = scriptsByScenario[displayId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
   const hasHandoff = handoffAt >= 0
+  // Jordan's scripted lines, offered as editable co-pilot suggestions once
+  // live -- never sent on their own, just a starting point the agent can
+  // send as-is, edit, or ignore entirely.
+  const cannedAgentLines = hasHandoff
+    ? script
+        .slice(handoffAt + 1)
+        .filter(
+          (t): t is Extract<ChatTurn, { kind: "message" }> =>
+            t.kind === "message" && t.from === "agent"
+        )
+        .map((t) => t.text)
+    : []
+  const sentAgentCount = chat.messages.filter((m) => m.from === "agent").length
+  const customerMessageCount = chat.messages.filter(
+    (m) => m.from === "customer"
+  ).length
   const direction = directionOf(displayId)
   const notified = isLive && liveSession!.stage === "notified"
   // Live, progress comes from the customer's actual session. Static, it comes
@@ -225,6 +245,19 @@ export function AgentWorkspace() {
     return () => clearTimeout(t)
   }, [replaying, replay])
 
+  // Co-pilot: once live, drop Jordan's next scripted line into the composer
+  // as a starting point -- right after takeover, and again each time the
+  // customer sends something new -- but only while the box is still empty,
+  // so it never overwrites whatever the agent is already typing.
+  useEffect(() => {
+    if (!liveHandoffActive || draft.trim()) return
+    const suggestion = cannedAgentLines[sentAgentCount]
+    if (!suggestion) return
+    setDraft(suggestion)
+    setIsSuggestion(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveHandoffActive, customerMessageCount, sentAgentCount])
+
   function accept() {
     if (!selectedId) return
     setAccepted((prev) => new Set(prev).add(selectedId))
@@ -236,6 +269,7 @@ export function AgentWorkspace() {
     if (!draft.trim()) return
     chat.send("agent", draft)
     setDraft("")
+    setIsSuggestion(false)
   }
 
   const sidebar = (
@@ -376,15 +410,26 @@ export function AgentWorkspace() {
             <div ref={endRef} />
           </div>
 
-          <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-3">
+          <div className="flex items-end gap-3 border-t border-border bg-card px-4 py-3">
             {liveHandoffActive ? (
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitDraft()}
-                placeholder="Type a message"
-                className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-brand-teal"
-              />
+              <div className="flex-1">
+                {isSuggestion && (
+                  <div className="mb-1 flex items-center gap-1 text-[11px] font-medium text-brand-navy dark:text-brand-teal">
+                    <Sparkles className="size-3" /> Suggested reply — edit or
+                    send as-is
+                  </div>
+                )}
+                <input
+                  value={draft}
+                  onChange={(e) => {
+                    setDraft(e.target.value)
+                    setIsSuggestion(false)
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && submitDraft()}
+                  placeholder="Type a message"
+                  className="w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-brand-teal"
+                />
+              </div>
             ) : (
               <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
                 {item.resolvedByAi
