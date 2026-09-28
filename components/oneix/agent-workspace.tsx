@@ -85,10 +85,6 @@ export function AgentWorkspace() {
   // something the agent has started editing -- purely for the "Suggested
   // reply" label, never gates whether it can be sent.
   const [isSuggestion, setIsSuggestion] = useState(false)
-  // How far a *static* ticket's full script has auto-played since it was
-  // opened -- reviewing an old ticket plays it back start to finish instead
-  // of dumping the whole transcript in at once.
-  const [replay, setReplay] = useState(0)
   const endRef = useRef<HTMLDivElement>(null)
 
   const liveSession =
@@ -150,14 +146,10 @@ export function AgentWorkspace() {
   ).length
   const direction = directionOf(displayId)
   const notified = isLive && liveSession!.stage === "notified"
-  // Live, progress comes from the customer's actual session. Static, it comes
-  // from the auto-playback below -- both just mean "how many turns in".
-  const replaying = !isLive && selectedId !== null && replay < script.length
-  const revealed = isLive
-    ? liveSession!.revealed
-    : selectedId === null
-      ? script.length
-      : replay
+  // Live, progress comes from the customer's actual session. A static
+  // (non-live) ticket just shows the whole thing at once -- reviewing an old
+  // ticket shouldn't play out turn by turn.
+  const revealed = isLive ? liveSession!.revealed : script.length
   // Where the AI's part of the conversation ends: at the handoff, or the end
   // of the script when the AI resolves everything itself.
   const aiEnd = hasHandoff ? handoffAt : script.length
@@ -165,9 +157,8 @@ export function AgentWorkspace() {
   const before = script.slice(0, Math.min(revealed, aiEnd))
   const showAfter = hasHandoff && aiDone
   const after = hasHandoff ? script.slice(handoffAt + 1, revealed) : []
-  const nextTurn = (isLive ? liveSession!.typing : replaying)
-    ? script[revealed]
-    : undefined
+  const nextTurn =
+    isLive && liveSession!.typing ? script[revealed] : undefined
   const stepsShown = aiDone
     ? item.steps.length
     : Math.max(
@@ -230,20 +221,6 @@ export function AgentWorkspace() {
     isAccepted,
     chat.messages.length,
   ])
-
-  // Opening a different (or no) ticket starts its playback over from scratch.
-  useEffect(() => {
-    setReplay(0)
-  }, [selectedId])
-
-  // Step a static ticket's script forward on its own, like replaying a
-  // finished conversation -- from the first message through the handoff to
-  // however it wrapped up.
-  useEffect(() => {
-    if (!replaying) return
-    const t = setTimeout(() => setReplay((r) => r + 1), 650)
-    return () => clearTimeout(t)
-  }, [replaying, replay])
 
   // Co-pilot: once live, drop Jordan's next scripted line into the composer
   // as a starting point -- right after takeover, and again each time the
