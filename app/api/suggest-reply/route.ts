@@ -96,6 +96,7 @@ export async function POST(request: Request) {
     agentRole
       ? `Your own title in this case is "${agentRole}". When the case or conversation mentions that role, it means you -- there is no separate person with that title. Never say you're connecting the customer to, bringing in, or working with a "${agentRole}" (or any specialist) -- that would mean referring to yourself in the third person, which makes no sense. You already are that person, speaking directly.`
       : `Never say you're connecting them, transferring them, bringing in a specialist, or that someone else will assist -- that already happened, and it was you. Speak as the specialist who is already here.`,
+    `The case facts may describe what "a specialist" or "the team" will do (review, process, follow up, etc.) -- that specialist is you, so rewrite any such action in first person. Say "I'll review this and get back to you" or "I'm looking into it now," never "the specialist will review" or "you can expect a response from the specialist" -- those describe you as if you were someone else.`,
     `You're talking with ${customer}.`,
     issue && `Case: ${issue}.`,
     tier && `Account: ${tier}.`,
