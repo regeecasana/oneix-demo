@@ -6,7 +6,7 @@ import type { ChatTurn, TxnVerdict } from "@/lib/oneix/types"
 import type { LiveMessage } from "@/lib/oneix/live-chat"
 import { useChatScript } from "@/hooks/use-chat-script"
 import { X, ShieldAlert, ShieldCheck, Check, Circle, Send } from "./icons"
-import { TurnAudioPlayer } from "./turn-audio-player"
+import { TurnAudioPlayer, type TurnAudioPlayerHandle } from "./turn-audio-player"
 import { TxnRow } from "./txn-row"
 import { ReplyChoices } from "./reply-choices"
 import { FaceIdPanel } from "./faceid-panel"
@@ -71,7 +71,7 @@ export function ChatWidget({
   const scrollRef = useRef<HTMLDivElement>(null)
   const stickToBottomRef = useRef(true)
   const [draft, setDraft] = useState("")
-  const [fastForward, setFastForward] = useState(false)
+  const audioPlayerRef = useRef<TurnAudioPlayerHandle>(null)
   const {
     rendered,
     pending,
@@ -201,10 +201,10 @@ export function ChatWidget({
       {batch && !awaitingReply && (
         <TurnAudioPlayer
           key={pending!.id}
+          ref={audioPlayerRef}
           clips={batch.clips}
           onStart={onAudioStart}
           onComplete={onAudioComplete}
-          speed={fastForward ? 2 : 1}
         />
       )}
 
@@ -250,26 +250,18 @@ export function ChatWidget({
           <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             Waiting for a live agent…
           </div>
-        ) : pending ? (
+        ) : pending && batch ? (
           <button
-            onClick={() => setFastForward((f) => !f)}
-            className={cn(
-              "flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs transition-colors",
-              fastForward
-                ? "border-teal-300 bg-teal-50 text-teal-800 dark:bg-teal-950/40 dark:text-teal-200"
-                : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
-            )}
+            onClick={() => audioPlayerRef.current?.skip()}
+            className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-muted"
           >
             Waiting for response…
-            <span
-              className={cn(
-                "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                fastForward ? "bg-teal-600 text-white" : "bg-border text-muted-foreground",
-              )}
-            >
-              2x
-            </span>
+            <span className="text-[10px] font-medium text-teal-700 dark:text-teal-400">Skip</span>
           </button>
+        ) : pending ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Waiting for response…
+          </div>
         ) : (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             {title}

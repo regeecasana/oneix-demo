@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react"
 import type { AudioClip } from "@/lib/oneix/types"
 
 /** Minimum time the typing indicator stays visible before a clip starts playing.
@@ -8,6 +8,12 @@ import type { AudioClip } from "@/lib/oneix/types"
  * so the indicator gets set and cleared within the same paint — the bubble and
  * audio appear to pop in with no typing beat at all. */
 const MIN_TYPING_MS = 750
+
+export interface TurnAudioPlayerHandle {
+  /** Stops whatever clip is currently playing and jumps straight to
+   * `onComplete`, as if every clip in the batch had finished normally. */
+  skip: () => void
+}
 
 /**
  * Plays one or more clips back-to-back for the current turn/batch. Renders
@@ -21,37 +27,27 @@ const MIN_TYPING_MS = 750
  * `onStart` fires once, right as the first clip begins playing — that's the
  * moment the widget hides the typing indicator and reveals the bubble(s).
  * `onComplete` fires once every clip has finished (or failed to play, e.g. a
- * blocked autoplay policy), which is when the widget advances to the next turn.
+ * blocked autoplay policy, or the customer skipped it), which is when the
+ * widget advances to the next turn.
  */
-export function TurnAudioPlayer({
-  clips,
-  onStart,
-  onComplete,
-  speed = 1,
-}: {
+export const TurnAudioPlayer = forwardRef<TurnAudioPlayerHandle, {
   clips: AudioClip[]
   onStart: () => void
   onComplete: () => void
-  /** Playback rate applied to every clip -- 2 for the "skip ahead" fast-forward
-   * the customer can toggle by clicking the waiting-for-response indicator. */
-  speed?: number
-}) {
+}>(function TurnAudioPlayer({ clips, onStart, onComplete }, ref) {
   const onStartRef = useRef(onStart)
   const onCompleteRef = useRef(onComplete)
-  const speedRef = useRef(speed)
   const currentRef = useRef<HTMLAudioElement | null>(null)
+  const skipRef = useRef<() => void>(() => {})
   onStartRef.current = onStart
   onCompleteRef.current = onComplete
-  speedRef.current = speed
 
-  // Applies live if the speed toggles mid-clip, not just to clips started after.
-  useEffect(() => {
-    if (currentRef.current) currentRef.current.playbackRate = speed
-  }, [speed])
+  useImperativeHandle(ref, () => ({ skip: () => skipRef.current() }), [])
 
   useEffect(() => {
     let cancelled = false
     let started = false
+    let done = false
 
     const reveal = () => {
       if (started || cancelled) return
@@ -59,20 +55,31 @@ export function TurnAudioPlayer({
       onStartRef.current()
     }
 
+    const finish = () => {
+      if (done || cancelled) return
+      done = true
+      reveal()
+      onCompleteRef.current()
+    }
+
     const playAt = (i: number) => {
       if (cancelled) return
       if (i >= clips.length) {
-        reveal()
-        onCompleteRef.current()
+        finish()
         return
       }
       const audio = new Audio(clips[i].src)
-      audio.playbackRate = speedRef.current
       currentRef.current = audio
       audio.addEventListener("playing", reveal, { once: true })
       audio.addEventListener("ended", () => playAt(i + 1))
       audio.addEventListener("error", () => playAt(i + 1))
       audio.play().catch(() => playAt(i + 1))
+    }
+
+    skipRef.current = () => {
+      currentRef.current?.pause()
+      currentRef.current = null
+      finish()
     }
 
     const startTimer = setTimeout(() => {
@@ -89,4 +96,4 @@ export function TurnAudioPlayer({
   }, [clips])
 
   return null
-}
+})
