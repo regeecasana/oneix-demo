@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { currentRoom } from "@/lib/oneix/live-session"
-import type { ChatOwner, LiveMessage } from "@/lib/oneix/live-chat"
+import type { ChatOwner, ChatStatus, LiveMessage } from "@/lib/oneix/live-chat"
 
 const POLL_MS = 1200
 
@@ -15,11 +15,13 @@ const POLL_MS = 1200
  */
 export function useLiveChat(sessionId: string | null) {
   const [owner, setOwner] = useState<ChatOwner>("ai")
+  const [status, setStatus] = useState<ChatStatus>("open")
   const [messages, setMessages] = useState<LiveMessage[]>([])
   const room = useRef(currentRoom())
 
   useEffect(() => {
     setOwner("ai")
+    setStatus("open")
     setMessages([])
     if (!sessionId) return
     let stopped = false
@@ -31,13 +33,18 @@ export function useLiveChat(sessionId: string | null) {
           cache: "no-store",
         })
         if (!res.ok) return
-        const json = (await res.json()) as { owner: ChatOwner; messages: LiveMessage[] }
+        const json = (await res.json()) as {
+          owner: ChatOwner
+          status: ChatStatus
+          messages: LiveMessage[]
+        }
         if (!stopped) {
-          // The server-side owner only ever moves ai -> agent, never back --
-          // so if we already know it's "agent" (an optimistic takeover(), or
-          // an earlier poll), a poll racing against that takeover's still-
-          // in-flight POST can only be stale, never a real reversal. Ignore it.
+          // Both owner and status only ever move forward (ai -> agent, open ->
+          // closed), never back -- so if we already know the "later" value (an
+          // optimistic update, or an earlier poll), a poll racing against that
+          // update's still-in-flight POST can only be stale. Ignore it.
           setOwner((prev) => (prev === "agent" ? "agent" : json.owner))
+          setStatus((prev) => (prev === "closed" ? "closed" : json.status))
           setMessages(json.messages)
         }
       } catch {
@@ -72,5 +79,15 @@ export function useLiveChat(sessionId: string | null) {
     }).catch(() => {})
   }
 
-  return { owner, messages, send, takeover }
+  function close() {
+    if (!sessionId) return
+    setStatus("closed") // optimistic — the next poll confirms it
+    fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room: room.current, sessionId, action: "close" }),
+    }).catch(() => {})
+  }
+
+  return { owner, status, messages, send, takeover, close }
 }

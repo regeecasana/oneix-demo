@@ -33,6 +33,8 @@ export function WhatsAppChat({
   onClose: () => void
 }) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const stickToBottomRef = useRef(true)
   const [draft, setDraft] = useState("")
   const {
     rendered,
@@ -51,14 +53,25 @@ export function WhatsAppChat({
     verdicts,
     classify,
     liveHandoff,
+    liveClosed,
     awaitingAgent,
     liveMessages,
     sendLiveMessage,
   } = useChatScript(scenarioId, script)
 
+  // Only auto-scroll if the customer was already at (or near) the bottom --
+  // otherwise a poll tick or a new message would yank them back down while
+  // they're deliberately scrolled up reading earlier history.
+  function handleScroll() {
+    const el = scrollRef.current
+    if (!el) return
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  }
+
   useEffect(() => {
+    if (!stickToBottomRef.current) return
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [rendered, typing, liveMessages])
+  }, [rendered.length, typing, liveMessages.length])
 
   function submitDraft() {
     if (!draft.trim()) return
@@ -91,6 +104,8 @@ export function WhatsAppChat({
         </div>
 
         <div
+          ref={scrollRef}
+          onScroll={handleScroll}
           className="flex-1 space-y-2.5 overflow-y-auto px-3 py-4"
           style={{
             backgroundImage:
@@ -130,6 +145,11 @@ export function WhatsAppChat({
                   {m.text}
                 </Bubble>
               ))}
+              {liveClosed && (
+                <div className="mx-auto w-fit rounded-md bg-black/10 px-2.5 py-1 text-center text-[11px] text-muted-foreground dark:bg-white/10">
+                  Conversation resolved
+                </div>
+              )}
             </>
           )}
 
@@ -164,7 +184,11 @@ export function WhatsAppChat({
         )}
 
         <div className="flex items-center gap-2 bg-[#f0f0f0] px-3 py-2.5 dark:bg-[#1f2c34]">
-          {liveHandoff ? (
+          {liveClosed ? (
+            <div className="flex-1 truncate rounded-full bg-white px-4 py-2 text-sm text-muted-foreground shadow-sm dark:bg-[#2a3942]">
+              This conversation has been resolved.
+            </div>
+          ) : liveHandoff ? (
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -184,7 +208,7 @@ export function WhatsAppChat({
               {awaitingAgent ? "Waiting for a live agent…" : "Message"}
             </div>
           )}
-          {liveHandoff ? (
+          {liveHandoff && !liveClosed ? (
             <button
               onClick={submitDraft}
               disabled={!draft.trim()}

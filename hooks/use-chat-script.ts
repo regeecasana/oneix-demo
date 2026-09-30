@@ -52,6 +52,7 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
   // continues as a real two-way exchange instead.
   const live = useLiveChat(sessionId)
   const liveHandoff = live.owner === "agent"
+  const liveClosed = live.status === "closed"
 
   // The scripted "Jordan" dialogue after a handoff is retired — once the
   // handoff turn itself has played, the script pauses there and waits for an
@@ -206,9 +207,13 @@ export function useChatScript(scenarioId: string, script: ChatTurn[]) {
     onAudioComplete,
     completeFaceId,
     liveHandoff,
+    liveClosed,
     awaitingAgent,
     liveMessages: live.messages,
-    sendLiveMessage: (text: string) => live.send("customer", text),
+    sendLiveMessage: (text: string) => {
+      if (liveClosed) return
+      live.send("customer", text)
+    },
     verdicts,
     classify,
   }

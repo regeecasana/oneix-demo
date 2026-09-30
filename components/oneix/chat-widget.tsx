@@ -68,6 +68,8 @@ export function ChatWidget({
   onClose: () => void
 }) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const stickToBottomRef = useRef(true)
   const [draft, setDraft] = useState("")
   const {
     rendered,
@@ -88,14 +90,25 @@ export function ChatWidget({
     verdicts,
     classify,
     liveHandoff,
+    liveClosed,
     awaitingAgent,
     liveMessages,
     sendLiveMessage,
   } = useChatScript(scenarioId, script)
 
+  // Only auto-scroll if the customer was already at (or near) the bottom --
+  // otherwise a poll tick or a new message would yank them back down while
+  // they're deliberately scrolled up reading earlier history.
+  function handleScroll() {
+    const el = scrollRef.current
+    if (!el) return
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  }
+
   useEffect(() => {
+    if (!stickToBottomRef.current) return
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [rendered, typing, liveMessages])
+  }, [rendered.length, typing, liveMessages.length])
 
   function submitDraft() {
     if (!draft.trim()) return
@@ -129,7 +142,7 @@ export function ChatWidget({
         </button>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {rendered.map((turn, i) => (
           <TurnView key={i} turn={turn} verdicts={verdicts} onClassify={classify} />
         ))}
@@ -156,6 +169,15 @@ export function ChatWidget({
             {liveMessages.map((m) => (
               <LiveBubble key={m.id} message={m} agentName={activeAgentName} />
             ))}
+            {liveClosed && (
+              <div className="flex items-center gap-2 py-1">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[11px] whitespace-nowrap text-muted-foreground">
+                  Conversation resolved
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+            )}
           </>
         )}
         {awaitingAgent && (
@@ -180,7 +202,11 @@ export function ChatWidget({
       )}
 
       <div className="border-t border-border px-4 py-3">
-        {liveHandoff ? (
+        {liveClosed ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            This conversation has been resolved.
+          </div>
+        ) : liveHandoff ? (
           <div className="flex items-center gap-2">
             <input
               value={draft}

@@ -195,6 +195,7 @@ export function AgentWorkspace() {
   // taken, it becomes a real two-way exchange instead of the scripted lines.
   const chat = useLiveChat(isLive ? liveSession!.sessionId : null)
   const liveHandoffActive = isLive && chat.owner === "agent"
+  const liveClosed = liveHandoffActive && chat.status === "closed"
 
   const script = scriptsByScenario[displayId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
@@ -239,9 +240,11 @@ export function AgentWorkspace() {
         isLive && direction === "outbound" ? 2 : 0
       )
 
-  const statusLabel = liveHandoffActive
-    ? `Live · You're chatting`
-    : isAccepted
+  const statusLabel = liveClosed
+    ? `Resolved by ${AGENT_NAME}`
+    : liveHandoffActive
+      ? `Live · You're chatting`
+      : isAccepted
       ? `Owned by ${AGENT_NAME}`
       : notified
         ? "Live · Notification sent"
@@ -322,7 +325,7 @@ export function AgentWorkspace() {
   // ref), so it doesn't re-fire on every render while the request is in
   // flight.
   useEffect(() => {
-    if (!liveHandoffActive || draft.trim()) return
+    if (!liveHandoffActive || liveClosed || draft.trim()) return
     if (suggestedForRef.current === customerMessageCount) return
     suggestedForRef.current = customerMessageCount
     let cancelled = false
@@ -379,6 +382,12 @@ export function AgentWorkspace() {
   function editSuggestion() {
     if (!suggestion) return
     setDraft(suggestion)
+    setSuggestion(null)
+  }
+
+  function resolve() {
+    chat.close()
+    setDraft("")
     setSuggestion(null)
   }
 
@@ -463,6 +472,8 @@ export function AgentWorkspace() {
             direction={direction}
             canTakeover={isLive && !liveHandoffActive}
             onTakeover={accept}
+            canResolve={liveHandoffActive && !liveClosed}
+            onResolve={resolve}
           />
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-muted/30 px-4 py-5 sm:px-6">
@@ -505,7 +516,7 @@ export function AgentWorkspace() {
 
             {liveHandoffActive && (
               <>
-                <TakeoverDivider name={AGENT_NAME} />
+                <TranscriptDivider text={`${AGENT_NAME} joined the conversation`} />
                 {chat.messages.map((m) => (
                   <LiveMessageRow
                     key={m.id}
@@ -513,6 +524,9 @@ export function AgentWorkspace() {
                     customer={item.customer}
                   />
                 ))}
+                {liveClosed && (
+                  <TranscriptDivider text="Conversation resolved" />
+                )}
               </>
             )}
 
@@ -521,7 +535,12 @@ export function AgentWorkspace() {
           </div>
 
           <div className="border-t border-border bg-card px-4 py-3">
-            {liveHandoffActive && suggestion ? (
+            {liveClosed ? (
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
+                <Check className="size-4 shrink-0" strokeWidth={3} />
+                Resolved — this conversation is closed.
+              </div>
+            ) : liveHandoffActive && suggestion ? (
               <div className="rounded-xl border border-brand-teal/25 bg-brand-teal/10 p-3">
                 <div className="mb-1.5 flex items-center gap-1 text-[11px] font-medium text-brand-navy dark:text-brand-teal">
                   <Sparkles className="size-3" /> Suggested reply
@@ -843,6 +862,8 @@ function TicketHeader({
   direction,
   canTakeover,
   onTakeover,
+  canResolve,
+  onResolve,
 }: {
   item: CaseFile
   accepted: boolean
@@ -851,6 +872,8 @@ function TicketHeader({
   direction: "inbound" | "outbound"
   canTakeover: boolean
   onTakeover: () => void
+  canResolve: boolean
+  onResolve: () => void
 }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-border bg-card px-4 py-4 sm:px-6">
@@ -894,14 +917,24 @@ function TicketHeader({
           {live && <LiveIndicator />}
         </div>
       </div>
-      {canTakeover && (
-        <button
-          onClick={onTakeover}
-          className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-navy/85 dark:bg-brand-teal dark:text-brand-navy dark:hover:bg-brand-teal/85"
-        >
-          Takeover
-        </button>
-      )}
+      <div className="flex shrink-0 items-center gap-2">
+        {canTakeover && (
+          <button
+            onClick={onTakeover}
+            className="flex items-center gap-2 rounded-lg bg-brand-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-navy/85 dark:bg-brand-teal dark:text-brand-navy dark:hover:bg-brand-teal/85"
+          >
+            Takeover
+          </button>
+        )}
+        {canResolve && (
+          <button
+            onClick={onResolve}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+          >
+            <Check className="size-4" strokeWidth={3} /> Resolve
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -1609,12 +1642,12 @@ function ResolvedCard({ note }: { note: string }) {
   )
 }
 
-function TakeoverDivider({ name }: { name: string }) {
+function TranscriptDivider({ text }: { text: string }) {
   return (
     <div className="flex items-center gap-2 py-1">
       <div className="h-px flex-1 bg-border" />
       <span className="flex items-center gap-1 text-[11px] whitespace-nowrap text-muted-foreground">
-        {name} joined the conversation
+        {text}
       </span>
       <div className="h-px flex-1 bg-border" />
     </div>

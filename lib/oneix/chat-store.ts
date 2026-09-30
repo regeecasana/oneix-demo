@@ -1,4 +1,4 @@
-import type { ChatOwner, LiveMessage } from "./live-chat"
+import type { ChatOwner, ChatStatus, LiveMessage } from "./live-chat"
 
 const TTL_SECONDS = 6 * 60 * 60
 const MAX_MESSAGES = 200
@@ -11,6 +11,7 @@ export const chatStoreKind: "redis" | "memory" = url && token ? "redis" : "memor
 
 interface MemChat {
   owner: ChatOwner
+  status: ChatStatus
   messages: LiveMessage[]
 }
 
@@ -33,20 +34,30 @@ async function redis(command: (string | number)[]): Promise<unknown> {
 const keyFor = (room: string, sessionId: string) => `oneix:chat:${room}:${sessionId}`
 const ownerKeyFor = (room: string, sessionId: string) =>
   `oneix:chatowner:${room}:${sessionId}`
+const statusKeyFor = (room: string, sessionId: string) =>
+  `oneix:chatstatus:${room}:${sessionId}`
 
 export async function readChat(
   room: string,
   sessionId: string
-): Promise<{ owner: ChatOwner; messages: LiveMessage[] }> {
+): Promise<{ owner: ChatOwner; status: ChatStatus; messages: LiveMessage[] }> {
   if (chatStoreKind === "memory") {
-    return memory.get(keyFor(room, sessionId)) ?? { owner: "ai", messages: [] }
+    return (
+      memory.get(keyFor(room, sessionId)) ?? {
+        owner: "ai",
+        status: "open",
+        messages: [],
+      }
+    )
   }
-  const [ownerRaw, rows] = await Promise.all([
+  const [ownerRaw, statusRaw, rows] = await Promise.all([
     redis(["GET", ownerKeyFor(room, sessionId)]) as Promise<string | null>,
+    redis(["GET", statusKeyFor(room, sessionId)]) as Promise<string | null>,
     redis(["LRANGE", keyFor(room, sessionId), "0", "-1"]) as Promise<string[]>,
   ])
   return {
     owner: ownerRaw === "agent" ? "agent" : "ai",
+    status: statusRaw === "closed" ? "closed" : "open",
     messages: (rows ?? []).map((row) => JSON.parse(row) as LiveMessage),
   }
 }
@@ -60,11 +71,26 @@ export async function setChatOwner(
 ): Promise<void> {
   if (chatStoreKind === "memory") {
     const key = keyFor(room, sessionId)
-    const current = memory.get(key) ?? { owner: "ai", messages: [] }
+    const current = memory.get(key) ?? { owner: "ai", status: "open", messages: [] }
     memory.set(key, { ...current, owner })
     return
   }
   await redis(["SET", ownerKeyFor(room, sessionId), owner, "EX", TTL_SECONDS])
+}
+
+/** The agent has marked this conversation resolved. */
+export async function setChatStatus(
+  room: string,
+  sessionId: string,
+  status: ChatStatus
+): Promise<void> {
+  if (chatStoreKind === "memory") {
+    const key = keyFor(room, sessionId)
+    const current = memory.get(key) ?? { owner: "ai", status: "open", messages: [] }
+    memory.set(key, { ...current, status })
+    return
+  }
+  await redis(["SET", statusKeyFor(room, sessionId), status, "EX", TTL_SECONDS])
 }
 
 export async function appendMessage(
@@ -74,7 +100,11 @@ export async function appendMessage(
 ): Promise<void> {
   if (chatStoreKind === "memory") {
     const key = keyFor(room, sessionId)
-    const current = memory.get(key) ?? { owner: "ai" as ChatOwner, messages: [] }
+    const current = memory.get(key) ?? {
+      owner: "ai" as ChatOwner,
+      status: "open" as ChatStatus,
+      messages: [],
+    }
     current.messages = [...current.messages, message].slice(-MAX_MESSAGES)
     memory.set(key, current)
     return

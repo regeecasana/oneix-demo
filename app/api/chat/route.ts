@@ -1,6 +1,6 @@
 import { ROOM_PATTERN } from "@/lib/oneix/live-session"
 import { MAX_MESSAGE_LENGTH, SESSION_ID_PATTERN, type LiveMessage } from "@/lib/oneix/live-chat"
-import { appendMessage, readChat, setChatOwner } from "@/lib/oneix/chat-store"
+import { appendMessage, readChat, setChatOwner, setChatStatus } from "@/lib/oneix/chat-store"
 
 const noStore = { "Cache-Control": "no-store" }
 
@@ -53,6 +53,11 @@ export async function POST(request: Request) {
       return Response.json({ ok: true }, { headers: noStore })
     }
 
+    if (body.action === "close") {
+      await setChatStatus(room, sessionId, "closed")
+      return Response.json({ ok: true }, { headers: noStore })
+    }
+
     const m = body.message
     const validMessage =
       m &&
@@ -62,6 +67,11 @@ export async function POST(request: Request) {
       m.text.length <= MAX_MESSAGE_LENGTH
     if (!validMessage) {
       return Response.json({ error: "Invalid message" }, { status: 400 })
+    }
+
+    const current = await readChat(room, sessionId)
+    if (current.status === "closed") {
+      return Response.json({ error: "Conversation closed" }, { status: 409, headers: noStore })
     }
 
     const message: LiveMessage = {
