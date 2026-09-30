@@ -64,15 +64,50 @@ const LAST_MESSAGE: Record<string, string> = Object.fromEntries(
 function scriptTurnToLine(
   turn: ChatTurn
 ): { role: "assistant" | "user"; text: string }[] {
-  if (turn.kind === "message") return [{ role: "assistant", text: turn.text }]
-  if (turn.kind === "reply") return [{ role: "user", text: turn.text }]
-  if (turn.kind === "checklist") {
-    const text = [turn.intro, ...turn.items, turn.outro]
-      .filter(Boolean)
-      .join(" ")
-    return text ? [{ role: "assistant", text }] : []
+  const assistant = (text: string) => [{ role: "assistant" as const, text }]
+  switch (turn.kind) {
+    case "message":
+      return assistant(turn.text)
+    case "reply":
+      return [{ role: "user", text: turn.text }]
+    case "checklist": {
+      const text = [turn.intro, ...turn.items, turn.outro]
+        .filter(Boolean)
+        .join(" ")
+      return text ? assistant(text) : []
+    }
+    case "alert":
+      return assistant(`[System alert] ${turn.title}: ${turn.lines.join("; ")}`)
+    case "system":
+      return assistant(`[System] ${turn.text}`)
+    case "faceid":
+      return assistant(`[System] ${turn.text}`)
+    case "handoff":
+      return assistant(`[System] Handed off to ${turn.to} (${turn.role}).`)
+    case "options": {
+      const options = turn.options
+        .map((o) => `${o.heading} — ${o.lines.join(", ")}`)
+        .join(" | ")
+      const text = [turn.intro, options, turn.outro].filter(Boolean).join(" ")
+      return assistant(text)
+    }
+    case "transactions": {
+      const items = turn.items
+        .map((t) => `${t.label} ${t.amount} (${t.time})`)
+        .join("; ")
+      return assistant(`[System] Flagged transactions: ${items}`)
+    }
+    case "payment": {
+      const rows = turn.rows.map((r) => `${r.label}: ${r.amount}`).join(", ")
+      return assistant(
+        `[System] ${turn.title} (source: ${turn.source}) — ${rows}. Total: ${turn.total}`
+      )
+    }
+    case "status": {
+      const rows = turn.rows.map((r) => `${r.label}: ${r.value}`).join(", ")
+      return assistant(`[System] ${turn.title} — ${rows}`)
+    }
   }
-  return []
 }
 
 /** Demo clock: anchored to the real time the page was opened (not a
@@ -274,12 +309,14 @@ export function AgentWorkspace() {
 
   // Co-pilot: once live, ask the model for a suggested reply -- right after
   // takeover, and again each time the customer sends something new -- and
-  // drop it into the composer as an editable starting point. Only while the
-  // box is still empty, so it never overwrites what the agent is typing, and
-  // only once per customer message (the ref), so it doesn't re-fire on every
-  // render while the request is in flight.
+  // drop it into the composer as an editable starting point. Skips only when
+  // the agent has actually started typing/editing (draft is non-empty and no
+  // longer the untouched suggestion) -- a *stale* suggestion still sitting
+  // there unsent gets overwritten by the fresh one. Also only once per
+  // customer message (the ref), so it doesn't re-fire on every render while
+  // the request is in flight.
   useEffect(() => {
-    if (!liveHandoffActive || draft.trim()) return
+    if (!liveHandoffActive || (draft.trim() && !isSuggestion)) return
     if (suggestedForRef.current === customerMessageCount) return
     suggestedForRef.current = customerMessageCount
     let cancelled = false
@@ -292,6 +329,9 @@ export function AgentWorkspace() {
         issue: item.issue,
         tier: item.tier,
         transcript: suggestTranscript,
+        // Jordan hasn't sent anything yet this takeover -- the suggestion
+        // should open with an introduction, not jump straight into it.
+        firstReply: !chat.messages.some((m) => m.from === "agent"),
       }),
     })
       .then((res) => (res.ok ? res.json() : null))

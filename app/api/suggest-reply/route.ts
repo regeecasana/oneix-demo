@@ -2,7 +2,7 @@ import { AGENT_NAME } from "@/lib/oneix/live-chat"
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini"
-const MAX_TRANSCRIPT_LINES = 40
+const MAX_TRANSCRIPT_LINES = 60
 const MAX_LINE_LENGTH = 2000
 const MAX_FIELD_LENGTH = 200
 
@@ -56,6 +56,7 @@ export async function POST(request: Request) {
     issue?: unknown
     tier?: unknown
     transcript?: unknown
+    firstReply?: unknown
   }
   try {
     body = await request.json()
@@ -77,13 +78,18 @@ export async function POST(request: Request) {
   const customer = textField(body.customer) || "the customer"
   const issue = textField(body.issue)
   const tier = textField(body.tier)
+  const firstReply = body.firstReply === true
 
   const systemPrompt = [
-    `You are ${AGENT_NAME}, a live human support agent who has just taken over this conversation from Adam, an AI assistant, after a handoff.`,
+    `You are ${AGENT_NAME}, a live human support agent. Adam, an AI assistant, has already handed this conversation off to you -- the transfer is done and you are now the one actively chatting with the customer, not someone about to connect them elsewhere.`,
+    `Never say you're connecting them, transferring them, bringing in a specialist, or that someone else will assist -- that already happened, and it was you. Speak as the specialist who is already here.`,
     `You're talking with ${customer}.`,
     issue && `Case: ${issue}.`,
     tier && `Account: ${tier}.`,
-    "Write only your next reply to the customer's most recent message -- 1 to 3 sentences, warm, professional, and specific to what was actually said. No preamble, no quotation marks, no signature, no restating your name.",
+    firstReply
+      ? `This is the first message the customer will see from you directly, so open by introducing yourself by name (e.g. "Hi ${customer.split(" ")[0]}, this is ${AGENT_NAME}") and briefly show you already have the context Adam gave you -- don't ask them to repeat anything already covered.`
+      : "The customer already knows you're here from earlier in this conversation -- continue naturally, don't reintroduce yourself or restate your name.",
+    "Write only your next reply -- 1 to 3 sentences, warm and professional, specific to what was actually said. No preamble, no quotation marks, no signature.",
   ]
     .filter(Boolean)
     .join(" ")
