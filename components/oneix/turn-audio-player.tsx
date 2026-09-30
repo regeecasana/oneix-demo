@@ -27,20 +27,31 @@ export function TurnAudioPlayer({
   clips,
   onStart,
   onComplete,
+  speed = 1,
 }: {
   clips: AudioClip[]
   onStart: () => void
   onComplete: () => void
+  /** Playback rate applied to every clip -- 2 for the "skip ahead" fast-forward
+   * the customer can toggle by clicking the waiting-for-response indicator. */
+  speed?: number
 }) {
   const onStartRef = useRef(onStart)
   const onCompleteRef = useRef(onComplete)
+  const speedRef = useRef(speed)
+  const currentRef = useRef<HTMLAudioElement | null>(null)
   onStartRef.current = onStart
   onCompleteRef.current = onComplete
+  speedRef.current = speed
+
+  // Applies live if the speed toggles mid-clip, not just to clips started after.
+  useEffect(() => {
+    if (currentRef.current) currentRef.current.playbackRate = speed
+  }, [speed])
 
   useEffect(() => {
     let cancelled = false
     let started = false
-    let current: HTMLAudioElement | null = null
 
     const reveal = () => {
       if (started || cancelled) return
@@ -56,7 +67,8 @@ export function TurnAudioPlayer({
         return
       }
       const audio = new Audio(clips[i].src)
-      current = audio
+      audio.playbackRate = speedRef.current
+      currentRef.current = audio
       audio.addEventListener("playing", reveal, { once: true })
       audio.addEventListener("ended", () => playAt(i + 1))
       audio.addEventListener("error", () => playAt(i + 1))
@@ -70,7 +82,8 @@ export function TurnAudioPlayer({
     return () => {
       cancelled = true
       clearTimeout(startTimer)
-      current?.pause()
+      currentRef.current?.pause()
+      currentRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clips])

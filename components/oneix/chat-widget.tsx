@@ -71,6 +71,7 @@ export function ChatWidget({
   const scrollRef = useRef<HTMLDivElement>(null)
   const stickToBottomRef = useRef(true)
   const [draft, setDraft] = useState("")
+  const [fastForward, setFastForward] = useState(false)
   const {
     rendered,
     pending,
@@ -198,7 +199,13 @@ export function ChatWidget({
       </div>
 
       {batch && !awaitingReply && (
-        <TurnAudioPlayer key={pending!.id} clips={batch.clips} onStart={onAudioStart} onComplete={onAudioComplete} />
+        <TurnAudioPlayer
+          key={pending!.id}
+          clips={batch.clips}
+          onStart={onAudioStart}
+          onComplete={onAudioComplete}
+          speed={fastForward ? 2 : 1}
+        />
       )}
 
       <div className="border-t border-border px-4 py-3">
@@ -239,13 +246,33 @@ export function ChatWidget({
               {pending.text}
             </button>
           )
+        ) : awaitingAgent ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Waiting for a live agent…
+          </div>
+        ) : pending ? (
+          <button
+            onClick={() => setFastForward((f) => !f)}
+            className={cn(
+              "flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs transition-colors",
+              fastForward
+                ? "border-teal-300 bg-teal-50 text-teal-800 dark:bg-teal-950/40 dark:text-teal-200"
+                : "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
+            )}
+          >
+            Waiting for response…
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                fastForward ? "bg-teal-600 text-white" : "bg-border text-muted-foreground",
+              )}
+            >
+              2x
+            </span>
+          </button>
         ) : (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            {awaitingAgent
-              ? "Waiting for a live agent…"
-              : pending
-                ? "Waiting for response…"
-                : title}
+            {title}
           </div>
         )}
         <p className="mt-2 text-center text-[10px] text-muted-foreground">Orchestrated by oneix</p>
