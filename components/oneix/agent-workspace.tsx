@@ -138,11 +138,12 @@ export function AgentWorkspace() {
     index: number
   } | null>(null)
   const [draft, setDraft] = useState("")
-  // True while `draft` is still the untouched co-pilot suggestion, not
-  // something the agent has started editing -- purely for the "Suggested
-  // reply" label, never gates whether it can be sent.
-  const [isSuggestion, setIsSuggestion] = useState(false)
-  // Whether a suggestion request is in flight, for the "Generating…" label.
+  // The AI-drafted reply awaiting the agent's approval or edit -- shown as
+  // its own card (Approve & Send / Edit), not silently dropped into the
+  // composer. Cleared the moment the agent approves it, edits it, or types
+  // something of their own instead.
+  const [suggestion, setSuggestion] = useState<string | null>(null)
+  // Whether a suggestion request is in flight, for the "Generating…" card.
   const [suggesting, setSuggesting] = useState(false)
   // How many customer messages we've already requested a suggestion for --
   // a ref (not state) so the effect below can dedupe without retriggering
@@ -309,14 +310,14 @@ export function AgentWorkspace() {
 
   // Co-pilot: once live, ask the model for a suggested reply -- right after
   // takeover, and again each time the customer sends something new -- and
-  // drop it into the composer as an editable starting point. Skips only when
-  // the agent has actually started typing/editing (draft is non-empty and no
-  // longer the untouched suggestion) -- a *stale* suggestion still sitting
-  // there unsent gets overwritten by the fresh one. Also only once per
-  // customer message (the ref), so it doesn't re-fire on every render while
-  // the request is in flight.
+  // show it as its own Approve/Edit card. Skips only once the agent has
+  // actually started typing their own reply (draft is exclusively that now,
+  // never auto-filled) -- a stale, still-unapproved suggestion card gets
+  // overwritten by the fresh one. Also only once per customer message (the
+  // ref), so it doesn't re-fire on every render while the request is in
+  // flight.
   useEffect(() => {
-    if (!liveHandoffActive || (draft.trim() && !isSuggestion)) return
+    if (!liveHandoffActive || draft.trim()) return
     if (suggestedForRef.current === customerMessageCount) return
     suggestedForRef.current = customerMessageCount
     let cancelled = false
@@ -337,8 +338,7 @@ export function AgentWorkspace() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { suggestion?: string } | null) => {
         if (cancelled || !data?.suggestion) return
-        setDraft(data.suggestion)
-        setIsSuggestion(true)
+        setSuggestion(data.suggestion)
       })
       .catch(() => {})
       .finally(() => {
@@ -361,7 +361,19 @@ export function AgentWorkspace() {
     if (!draft.trim()) return
     chat.send("agent", draft)
     setDraft("")
-    setIsSuggestion(false)
+    setSuggestion(null)
+  }
+
+  function approveSuggestion() {
+    if (!suggestion) return
+    chat.send("agent", suggestion)
+    setSuggestion(null)
+  }
+
+  function editSuggestion() {
+    if (!suggestion) return
+    setDraft(suggestion)
+    setSuggestion(null)
   }
 
   const sidebar = (
@@ -502,53 +514,71 @@ export function AgentWorkspace() {
             <div ref={endRef} />
           </div>
 
-          <div className="flex items-end gap-3 border-t border-border bg-card px-4 py-3">
-            {liveHandoffActive ? (
-              <div className="flex-1">
-                {isSuggestion ? (
-                  <div className="mb-1 flex items-center gap-1 text-[11px] font-medium text-brand-navy dark:text-brand-teal">
-                    <Sparkles className="size-3" /> Suggested reply — edit or
-                    send as-is
-                  </div>
-                ) : suggesting && !draft.trim() ? (
-                  <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                    <span className="relative flex size-1.5">
-                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-teal/70" />
-                      <span className="relative inline-flex size-1.5 rounded-full bg-brand-teal" />
-                    </span>
-                    Generating a suggested reply…
-                  </div>
-                ) : null}
-                <input
-                  value={draft}
-                  onChange={(e) => {
-                    setDraft(e.target.value)
-                    setIsSuggestion(false)
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && submitDraft()}
-                  placeholder="Type a message"
-                  className="w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-brand-teal"
-                />
+          <div className="border-t border-border bg-card px-4 py-3">
+            {liveHandoffActive && suggestion ? (
+              <div className="rounded-xl border border-brand-teal/25 bg-brand-teal/10 p-3">
+                <div className="mb-1.5 flex items-center gap-1 text-[11px] font-medium text-brand-navy dark:text-brand-teal">
+                  <Sparkles className="size-3" /> Suggested reply
+                </div>
+                <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">
+                  {suggestion}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    onClick={approveSuggestion}
+                    className="flex items-center gap-1.5 rounded-lg bg-brand-navy px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand-navy/85"
+                  >
+                    <Check className="size-3.5" strokeWidth={3} /> Approve
+                    &amp; Send
+                  </button>
+                  <button
+                    onClick={editSuggestion}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            ) : liveHandoffActive && suggesting && !draft.trim() ? (
+              <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-[13px] text-muted-foreground">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-teal/70" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-brand-teal" />
+                </span>
+                Generating a suggested reply…
               </div>
             ) : (
-              <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
-                {item.resolvedByAi
-                  ? "Resolved by AI — no reply needed"
-                  : isLive && isAccepted
-                    ? "Connecting…"
-                    : isAccepted
-                      ? "Handoff accepted"
-                      : "Accept the handoff to reply"}
+              <div className="flex items-end gap-3">
+                {liveHandoffActive ? (
+                  <input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitDraft()}
+                    placeholder="Type a message"
+                    autoFocus
+                    className="w-full rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-foreground outline-none focus:border-brand-teal"
+                  />
+                ) : (
+                  <div className="flex-1 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
+                    {item.resolvedByAi
+                      ? "Resolved by AI — no reply needed"
+                      : isLive && isAccepted
+                        ? "Connecting…"
+                        : isAccepted
+                          ? "Handoff accepted"
+                          : "Accept the handoff to reply"}
+                  </div>
+                )}
+                <button
+                  onClick={liveHandoffActive ? submitDraft : undefined}
+                  disabled={!liveHandoffActive || !draft.trim()}
+                  aria-label="Send"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-navy text-white transition-colors hover:bg-brand-navy/85 disabled:opacity-40"
+                >
+                  <ArrowUp className="size-4" />
+                </button>
               </div>
             )}
-            <button
-              onClick={liveHandoffActive ? submitDraft : undefined}
-              disabled={!liveHandoffActive || !draft.trim()}
-              aria-label="Send"
-              className="flex size-10 items-center justify-center rounded-xl bg-brand-navy text-white transition-colors hover:bg-brand-navy/85 disabled:opacity-40"
-            >
-              <ArrowUp className="size-4" />
-            </button>
           </div>
         </main>
 
