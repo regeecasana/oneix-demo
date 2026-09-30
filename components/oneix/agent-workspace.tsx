@@ -199,6 +199,11 @@ export function AgentWorkspace() {
   const script = scriptsByScenario[displayId]
   const handoffAt = script.findIndex((t) => t.kind === "handoff")
   const hasHandoff = handoffAt >= 0
+  const handoffTurn = hasHandoff ? script[handoffAt] : undefined
+  // The live agent's own title in this case (e.g. "Ticketing Specialist") --
+  // handed to the co-pilot so it can't confuse that role for a third party.
+  const agentRole =
+    handoffTurn && handoffTurn.kind === "handoff" ? handoffTurn.role : ""
   const customerMessageCount = chat.messages.filter(
     (m) => m.from === "customer"
   ).length
@@ -329,6 +334,7 @@ export function AgentWorkspace() {
         customer: item.customer,
         issue: item.issue,
         tier: item.tier,
+        agentRole,
         transcript: suggestTranscript,
         // Jordan hasn't sent anything yet this takeover -- the suggestion
         // should open with an introduction, not jump straight into it.
