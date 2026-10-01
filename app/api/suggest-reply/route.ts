@@ -17,6 +17,14 @@ function textField(value: unknown): string {
   return typeof value === "string" ? value.slice(0, MAX_FIELD_LENGTH) : ""
 }
 
+function validRecommendation(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .map((v) => v.slice(0, MAX_FIELD_LENGTH))
+    .slice(0, 10)
+}
+
 function validTranscript(value: unknown): TranscriptLine[] | null {
   if (!Array.isArray(value) || value.length === 0) return null
   const lines: TranscriptLine[] = []
@@ -56,6 +64,7 @@ export async function POST(request: Request) {
     issue?: unknown
     tier?: unknown
     agentRole?: unknown
+    recommendation?: unknown
     transcript?: unknown
     firstReply?: unknown
   }
@@ -80,6 +89,7 @@ export async function POST(request: Request) {
   const issue = textField(body.issue)
   const tier = textField(body.tier)
   const agentRole = textField(body.agentRole)
+  const recommendation = validRecommendation(body.recommendation)
   const firstReply = body.firstReply === true
 
   const firstName = customer.split(" ")[0]
@@ -102,6 +112,8 @@ export async function POST(request: Request) {
     `You're talking with ${customer}.`,
     issue && `Case: ${issue}.`,
     tier && `Account: ${tier}.`,
+    recommendation.length > 0 &&
+      `Your recommended next steps for this case, from the handoff brief, are: ${recommendation.join("; ")}. Use these to decide what to actually say -- pick whichever is most relevant to what the customer just said, and phrase it as your own next action in first person (e.g. a recommendation to "confirm X" becomes "I'll confirm X" or "I can confirm X"). Don't just restate the list or read it out as steps -- fold the relevant one into a natural reply.`,
     `Ground your reply in the specific facts of this case and conversation above -- amounts, actions already taken, what's already resolved. Even if the customer's message is short or vague (e.g. "hi", "I need help"), you already know why they're here, so respond with that specific context instead of a generic "what do you need help with" question.`,
     firstReply
       ? `This is the very first thing the customer will see from you. A greeting -- "${intro}" -- will be added automatically before whatever you write, so do NOT write any greeting or self-introduction yourself. Just write one short, natural sentence that follows on from it, showing you already have the context Adam gave you.`

@@ -338,6 +338,7 @@ export function AgentWorkspace() {
         issue: item.issue,
         tier: item.tier,
         agentRole,
+        recommendation: item.recommendation,
         transcript: suggestTranscript,
         // Jordan hasn't sent anything yet this takeover -- the suggestion
         // should open with an introduction, not jump straight into it.
